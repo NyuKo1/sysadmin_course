@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ru" data-root="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Урок 2. Язык компьютера</title>
+  <meta name="description" content="Биты, байты, двоичный и шестнадцатеричный код.">
+  <meta name="theme-color" content="#0d1210">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="../index.html"><span data-px="bit"></span>Памятьвиль</a>
+      <nav>
+        <a href="../index.html">Курс</a>
+        <a href="#homework">ДЗ</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="lesson-head">
+      <p class="kicker">Месяц 1 · Урок 2 · Центр Памятьвиля</p>
+      <h1>Язык компьютера: биты и байты</h1>
+      <p class="muted">Почему компьютер понимает только 0 и 1, как ими считать и как из них получаются буквы и гигабайты.</p>
+    </div>
+
+    <ol class="steps" aria-label="План урока">
+      <li><a href="#warmup">Разминка</a></li>
+      <li><a href="#t1">Теория 1</a></li>
+      <li><a href="#g1" class="game">Игра 1</a></li>
+      <li><a href="#t2">Теория 2</a></li>
+      <li><a href="#g2" class="game">Игра 2</a></li>
+      <li><a href="#t3">Теория 3</a></li>
+      <li><a href="#boss" class="game">Босс</a></li>
+      <li><a href="#homework">Дома</a></li>
+    </ol>
+
+    <!-- Разминка -->
+    <section class="block" id="warmup">
+      <span class="block-label">Разминка · 15 мин</span>
+      <h2>Мем недели</h2>
+      <figure class="meme" aria-label="Мем">
+        <div class="meme-top">Существует 10 типов людей</div>
+        <div class="meme-pic"><span data-px="bitShock"></span></div>
+        <div class="meme-bottom">те, кто понимает двоичный код, и те, кто нет</div>
+      </figure>
+      <p class="muted" style="text-align:center">Не смешно? К концу урока будет.</p>
+    </section>
+
+    <!-- Теория 1 -->
+    <section class="block" id="t1">
+      <span class="block-label">Теория 1 · 40 мин</span>
+      <h2>Почему только 0 и 1</h2>
+      <p>Внутри процессора нет цифр, букв и картинок. Там есть миллиарды крошечных выключателей, которые называются <b>транзисторы</b>. Каждый из них умеет только две вещи: пропускать ток или не пропускать.</p>
+      <p>Договорились так: ток есть, значит <b>1</b>, тока нет, значит <b>0</b>. Один такой выключатель хранит одну «да или нет». Это и есть <b>бит</b>, самая маленькая порция информации.</p>
+
+      <div class="bit-says">
+        <span data-px="bit"></span>
+        <div class="bubble">
+          <span class="who">Бит Байт</span>
+          Да, меня назвали в честь бита. Я тоже умею только два состояния: сплю и ем.
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Попробуй: один бит</h3>
+        <p>Нажми на выключатель. Сколько разных сообщений можно передать одним битом?</p>
+        <div class="bits" style="--n:1" data-explorer="1"><button class="bit" aria-pressed="false">0</button></div>
+        <p class="muted">Ответ: два. «Да» или «нет», «свет горит» или «не горит».</p>
+      </div>
+
+      <p>Одного бита мало. Но если поставить выключатели в ряд, вариантов становится больше. Два бита дают 4 комбинации: 00, 01, 10, 11. Три бита дают 8. Каждый новый бит удваивает число вариантов.</p>
+
+      <div class="panel">
+        <h3>Попробуй: три бита</h3>
+        <p>Найди все 8 комбинаций. Справа видно, какое число они означают.</p>
+        <div class="bits" style="--n:3" data-explorer="3">
+          <button class="bit" aria-pressed="false" data-w="4">0</button>
+          <button class="bit" aria-pressed="false" data-w="2">0</button>
+          <button class="bit" aria-pressed="false" data-w="1">0</button>
+        </div>
+        <p class="readout">= <b data-explorer-out="3">0</b></p>
+      </div>
+
+      <details class="deeper">
+        <summary>Глубже: почему не 10 уровней тока, как 10 цифр?</summary>
+        <p>Можно было бы делить напряжение на 10 ступенек, по одной на каждую цифру. Но провода в компьютере шумят: напряжение всё время немного прыгает из-за тепла и соседних проводов. Отличить «есть ток» от «нет тока» легко даже при шуме, а отличить ступеньку 6 от ступеньки 7 намного сложнее. Поэтому два состояния надёжнее, и все современные компьютеры двоичные.</p>
+      </details>
+    </section>
+
+    <!-- Игра 1 -->
+    <section class="block" id="g1">
+      <span class="block-label game">Игра 1 · 15 мин</span>
+      <div class="minigame" data-game="bits" data-mode="toBits"></div>
+    </section>
+
+    <!-- Теория 2 -->
+    <section class="block" id="t2">
+      <span class="block-label">Теория 2 · 40 мин</span>
+      <h2>Как считать в двоичном коде</h2>
+      <p>В обычных числах каждая позиция «весит» в 10 раз больше соседней: единицы, десятки, сотни. В двоичном коде каждая позиция весит в <b>2 раза</b> больше. Справа налево: 1, 2, 4, 8, 16, 32, 64, 128.</p>
+
+      <div class="places" aria-hidden="true">
+        <span class="h">8-й</span><span class="h">7-й</span><span class="h">6-й</span><span class="h">5-й</span><span class="h">4-й</span><span class="h">3-й</span><span class="h">2-й</span><span class="h">1-й</span>
+        <span class="v">128</span><span class="v">64</span><span class="v">32</span><span class="v">16</span><span class="v">8</span><span class="v">4</span><span class="v">2</span><span class="v">1</span>
+      </div>
+
+      <p>Чтобы узнать число, складываем веса там, где стоит 1. Например, <code>1101</code> это 8 + 4 + 1 = <b>13</b>.</p>
+      <p>Обратно тоже просто. Чтобы записать 13, берём самый большой вес, который влезает (8), остаётся 5. Влезает 4, остаётся 1. Влезает 1, остаётся 0. Включаем биты 8, 4 и 1: получается <code>1101</code>.</p>
+
+      <div class="panel">
+        <h3>Пульт байта</h3>
+        <p>Восемь битов вместе. Включай и выключай их и смотри, как меняется число.</p>
+        <div class="bits" style="--n:8" data-explorer="8">
+          <button class="bit" aria-pressed="false" data-w="128">0</button>
+          <button class="bit" aria-pressed="false" data-w="64">0</button>
+          <button class="bit" aria-pressed="false" data-w="32">0</button>
+          <button class="bit" aria-pressed="false" data-w="16">0</button>
+          <button class="bit" aria-pressed="false" data-w="8">0</button>
+          <button class="bit" aria-pressed="false" data-w="4">0</button>
+          <button class="bit" aria-pressed="false" data-w="2">0</button>
+          <button class="bit" aria-pressed="false" data-w="1">0</button>
+        </div>
+        <div class="bit-weights" style="--n:8"><span>128</span><span>64</span><span>32</span><span>16</span><span>8</span><span>4</span><span>2</span><span>1</span></div>
+        <p class="readout">= <b data-explorer-out="8">0</b> <span class="muted">· HEX <span data-explorer-hex="8">00</span></span></p>
+      </div>
+
+      <div class="bit-says">
+        <span data-px="bitHappy"></span>
+        <div class="bubble">
+          <span class="who">Бит Байт</span>
+          Теперь мем понятен? «10» в двоичном коде это 2. Значит, типов людей всего два.
+        </div>
+      </div>
+
+      <details class="deeper">
+        <summary>Глубже: перевод делением на 2</summary>
+        <p>Есть второй способ перевести число в двоичный код. Делим число на 2 и записываем остаток, пока не получится 0. Потом читаем остатки снизу вверх.</p>
+        <p class="mono">13 : 2 = 6, остаток 1<br>6 : 2 = 3, остаток 0<br>3 : 2 = 1, остаток 1<br>1 : 2 = 0, остаток 1<br>Снизу вверх: 1101</p>
+        <p>Так работают и программы, которые переводят числа внутри компьютера.</p>
+      </details>
+    </section>
+
+    <!-- Игра 2 -->
+    <section class="block" id="g2">
+      <span class="block-label game">Игра 2 · 15 мин</span>
+      <div class="minigame" data-game="bits" data-mode="toDec"></div>
+    </section>
+
+    <!-- Теория 3 -->
+    <section class="block" id="t3">
+      <span class="block-label">Теория 3 · 30 мин</span>
+      <h2>Байты, буквы и гигабайты</h2>
+      <p>Восемь битов вместе называются <b>байт</b>. Байтом можно записать 256 разных чисел: от 0 (<code>00000000</code>) до 255 (<code>11111111</code>).</p>
+      <p>Буквы компьютер тоже хранит числами. Есть таблица, где у каждой буквы свой номер. Например, латинская <code>A</code> это 65, то есть <code>01000001</code>. Когда ты печатаешь сообщение, на самом деле отправляются числа.</p>
+
+      <h3>Единицы измерения</h3>
+      <div class="panel">
+        <p class="mono" style="margin:0">8 бит = 1 байт<br>1024 байта = 1 килобайт (КБ)<br>1024 КБ = 1 мегабайт (МБ)<br>1024 МБ = 1 гигабайт (ГБ)<br>1024 ГБ = 1 терабайт (ТБ)</p>
+      </div>
+      <p>Почему 1024, а не 1000? Потому что 1024 это 2 в десятой степени, круглое число для компьютера.</p>
+
+      <details class="deeper">
+        <summary>Глубже: почему флешка на 64 ГБ показывает 59</summary>
+        <p>Производители считают гигабайт как 1 000 000 000 байт, а Windows как 1024 × 1024 × 1024 = 1 073 741 824 байта. Получается, что «64 ГБ» производителя это 64 000 000 000 : 1 073 741 824 ≈ 59,6 ГБ по счёту Windows. Никто не обманул, просто считают по-разному.</p>
+      </details>
+
+      <h3>Шестнадцатеричный код (HEX)</h3>
+      <p>Длинные ряды нулей и единиц читать неудобно. Поэтому программисты делят байт на две половинки по 4 бита и каждую записывают одним знаком. Четыре бита дают 16 вариантов, и цифр не хватает, поэтому после 9 идут буквы: A = 10, B = 11, C = 12, D = 13, E = 14, F = 15.</p>
+      <p>Например, <code>1111 0000</code> это <code>F0</code>, а <code>0010 1010</code> это <code>2A</code>. Посмотри на «Пульт байта» выше: там тоже есть HEX.</p>
+
+      <div class="bit-says">
+        <span data-px="bit"></span>
+        <div class="bubble">
+          <span class="who">Бит Байт</span>
+          HEX ещё встретится в месяце 4. Цвета на сайтах записывают именно так: <code>#FF0000</code> это красный.
+        </div>
+      </div>
+    </section>
+
+    <!-- Босс -->
+    <section class="block" id="boss">
+      <span class="block-label game">Босс урока · 15 мин</span>
+      <div class="minigame" data-game="bits" data-mode="boss"></div>
+    </section>
+
+    <!-- Дома -->
+    <section class="block" id="homework">
+      <span class="block-label home">Дома · около 60 мин</span>
+      <h2>Повтори и сделай ДЗ</h2>
+      <div class="panel">
+        <h3>Коротко</h3>
+        <ul>
+          <li>Бит хранит 0 или 1, как выключатель.</li>
+          <li>Каждый новый бит удваивает число вариантов.</li>
+          <li>Веса битов справа налево: 1, 2, 4, 8, 16, 32, 64, 128.</li>
+          <li>8 бит = 1 байт = 256 вариантов.</li>
+          <li>HEX записывает каждые 4 бита одним знаком от 0 до F.</li>
+        </ul>
+      </div>
+      <p>Сыграй ещё раз в игры выше: задания каждый раз новые. Потом заполни домашнее задание. Делай его сам, без подсказок: так ты заработаешь XP честно.</p>
+      <!-- Ссылку на форму вставить в data-form, например https://docs.google.com/forms/d/e/.../viewform?embedded=true -->
+      <div data-homework data-form="">
+        <div class="hw-off">Форма домашнего задания появится здесь, когда учитель её добавит.</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap"><a href="../index.html">← Ко всем урокам</a></div>
+  </footer>
+
+  <script src="../assets/js/pixel.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script src="../assets/js/lesson.js"></script>
+  <script src="../assets/js/games/bits.js"></script>
+</body>
+</html>

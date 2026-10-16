@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru" data-root="./">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Памятьвиль: от железа до софта</title>
+  <meta name="description" content="Курс для 10–17 лет: как устроены компьютеры, программы, сети, безопасность и ИИ.">
+  <meta name="theme-color" content="#0d1210">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="index.html"><span data-px="bit"></span>Памятьвиль</a>
+      <nav>
+        <a href="index.html" aria-current="page">Курс</a>
+        <a href="#offline">Офлайн</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div>
+        <p class="kicker">9 месяцев · 36 уроков · от бита до ИИ</p>
+        <h1>Как на самом деле работает компьютер</h1>
+        <p>Это учебник курса. Здесь лежат все уроки, мини-игры и домашние задания. Возвращайся сюда дома, чтобы повторить то, что было на уроке.</p>
+      </div>
+      <span data-px="bit" class="px-big" data-label="Бит, кот из семьи Байт"></span>
+    </section>
+
+    <div class="bit-says">
+      <span data-px="bitHappy"></span>
+      <div class="bubble">
+        <span class="who">Бит Байт</span>
+        Привет! Я Бит из семьи Байт, живу в Памятьвиле, это город внутри твоего компьютера. Каждый месяц я переезжаю в новый район и показываю, как там всё устроено. Пойдёшь со мной?
+      </div>
+    </div>
+
+    <h2>Карта курса</h2>
+    <ol class="months" id="course-map"></ol>
+
+    <h2>Уровни</h2>
+    <p>За домашние задания и тесты начисляется XP. Уровни показывают твой прогресс, а итоговую оценку даёт только экзамен в конце.</p>
+    <ul class="levels" id="levels"></ul>
+
+    <section class="panel" id="offline">
+      <h2>Сайт без интернета</h2>
+      <p>В кабинете нет интернета, поэтому сохрани сайт на телефон дома. Открой эту страницу, нажми кнопку и дождись зелёной точки. После этого уроки и игры откроются и без сети.</p>
+      <div class="offline-bar">
+        <button class="btn" data-save-offline>Сохранить для офлайна</button>
+        <span data-offline-status class="muted"><span class="status-dot"></span>Проверяю…</span>
+      </div>
+      <p class="muted">Совет: в меню браузера выбери «Добавить на главный экран», и курс откроется как приложение. Домашние задания (Google Forms) работают только с интернетом.</p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">Курс «От железа до софта» · Памятьвиль</div>
+  </footer>
+
+  <script src="assets/js/pixel.js"></script>
+  <script src="assets/js/course.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
