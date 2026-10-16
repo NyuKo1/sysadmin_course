@@ -29,6 +29,7 @@
     </div>
 
     <ol class="steps" aria-label="План урока">
+      <li><a href="#story">Серия</a></li>
       <li><a href="#warmup">Разминка</a></li>
       <li><a href="#t1">Теория 1</a></li>
       <li><a href="#g1" class="game">Игра 1</a></li>
@@ -39,17 +40,23 @@
       <li><a href="#homework">Дома</a></li>
     </ol>
 
+    <!-- Серия -->
+    <section class="block" id="story">
+      <span class="block-label">Серия · 5 мин</span>
+      <div class="story" data-story="l02-intro"></div>
+    </section>
+
     <!-- Разминка -->
     <section class="block" id="warmup">
       <span class="block-label">Разминка · 15 мин</span>
       <h2>Мем недели</h2>
       <figure class="meme" aria-label="Мем">
-        <div class="meme-top">Существует 10 типов людей</div>
-        <div class="meme-pic"><span data-px="bitShock"></span></div>
-        <div class="meme-bottom">те, кто понимает двоичный код, и те, кто нет</div>
+        <div class="meme-top">Существует 10 типов котиков</div>
+        <div class="meme-pic"><img class="meme-gif" src="../assets/gif/meme-10-types.gif" alt="Бит и Нибл смеются над табло с числом 10, дедушка Мега не понимает" width="256" height="192" loading="lazy"></div>
+        <div class="meme-bottom">те, кто знает двоичный код, и те, кто ждёт ещё восьмерых</div>
       </figure>
       <p class="muted" style="text-align:center">Не смешно? К концу урока будет.</p>
-      <div class="gif-row"><img class="gif big" src="../assets/gif/wave.gif" alt="Бит машет лапой" width="128" height="128"></div>
+      <div class="gif-row"><img class="gif big" src="../assets/gif/bit-dance.gif" alt="Бит танцует" width="128" height="128"></div>
     </section>
 
     <!-- Теория 1 -->
@@ -60,7 +67,7 @@
       <p>Договорились так: ток есть, значит <b>1</b>, тока нет, значит <b>0</b>. Один такой выключатель хранит одну «да или нет». Это и есть <b>бит</b>, самая маленькая порция информации.</p>
 
       <div class="bit-says">
-        <span data-px="bit"></span>
+        <img class="gif" src="../assets/gif/bit-sleep.gif" alt="" width="96" height="96">
         <div class="bubble">
           <span class="who">Бит Байт</span>
           Да, меня назвали в честь бита. Я тоже умею только два состояния: сплю и ем.
@@ -101,6 +108,7 @@
 
     <!-- Теория 2 -->
     <section class="block" id="t2" data-stage="1">
+      <div class="story" data-story="l02-g1"></div>
       <span class="block-label">Теория 2 · 40 мин</span>
       <h2>Как считать в двоичном коде</h2>
       <p>В обычных числах каждая позиция «весит» в 10 раз больше соседней: единицы, десятки, сотни. В двоичном коде каждая позиция весит в <b>2 раза</b> больше. Справа налево: 1, 2, 4, 8, 16, 32, 64, 128.</p>
@@ -138,6 +146,12 @@
         </div>
       </div>
 
+      <figure class="meme" aria-label="Мем">
+        <div class="meme-top">Нибл научилась считать на пальцах в двоичном коде</div>
+        <div class="meme-pic"><img class="meme-gif" src="../assets/gif/meme-nibble-1023.gif" alt="Нибл считает на десяти пальцах-лампочках, на 1024 всё сгорает" width="256" height="192" loading="lazy"></div>
+        <div class="meme-bottom">До 1023 всё шло отлично. На 1024 пальцы закончились</div>
+      </figure>
+
       <details class="deeper">
         <summary>Глубже: перевод делением на 2</summary>
         <p>Есть второй способ перевести число в двоичный код. Делим число на 2 и записываем остаток, пока не получится 0. Потом читаем остатки снизу вверх.</p>
@@ -154,6 +168,7 @@
 
     <!-- Теория 3 -->
     <section class="block" id="t3" data-stage="2">
+      <div class="story" data-story="l02-g2"></div>
       <span class="block-label">Теория 3 · 30 мин</span>
       <h2>Байты, буквы и гигабайты</h2>
       <p>Восемь битов вместе называются <b>байт</b>. Байтом можно записать 256 разных чисел: от 0 (<code>00000000</code>) до 255 (<code>11111111</code>).</p>
@@ -165,6 +180,12 @@
       </div>
       <p>Почему 1024, а не 1000? Потому что 1024 это 2 в десятой степени, круглое число для компьютера.</p>
 
+      <figure class="meme" aria-label="Мем">
+        <div class="meme-top">Тариф 100 Мбит/с, а качается 12 МБ/с</div>
+        <div class="meme-pic"><img class="meme-gif" src="../assets/gif/meme-router.gif" alt="Дедушка Мега не понимает, почему 100 превратилось в 12, Нибл показывает: раздели на 8" width="256" height="192" loading="lazy"></div>
+        <div class="meme-bottom">Провайдер не обманул. Просто в байте 8 бит</div>
+      </figure>
+
       <details class="deeper">
         <summary>Глубже: почему флешка на 64 ГБ показывает 59</summary>
         <p>Производители считают гигабайт как 1 000 000 000 байт, а Windows как 1024 × 1024 × 1024 = 1 073 741 824 байта. Получается, что «64 ГБ» производителя это 64 000 000 000 : 1 073 741 824 ≈ 59,6 ГБ по счёту Windows. Никто не обманул, просто считают по-разному.</p>
@@ -175,7 +196,7 @@
       <p>Например, <code>1111 0000</code> это <code>F0</code>, а <code>0010 1010</code> это <code>2A</code>. Посмотри на «Пульт байта» выше: там тоже есть HEX.</p>
 
       <div class="bit-says">
-        <span data-px="bit"></span>
+        <img class="gif" src="../assets/gif/bit-cool.gif" alt="" width="96" height="96">
         <div class="bubble">
           <span class="who">Бит Байт</span>
           HEX ещё встретится в месяце 4. Цвета на сайтах записывают именно так: <code>#FF0000</code> это красный.
@@ -191,6 +212,7 @@
 
     <!-- Дома -->
     <section class="block" id="homework" data-stage="3">
+      <div class="story" data-story="l02-finale"></div>
       <span class="block-label home">Дома · около 60 мин</span>
       <h2>Повтори и сделай ДЗ</h2>
       <div class="panel">
@@ -216,6 +238,8 @@
   <script src="../assets/js/course.js"></script>
   <script src="../assets/js/forms.js"></script>
   <script src="../assets/js/pixel.js"></script>
+  <script src="../assets/js/story.js"></script>
+  <script src="../assets/js/content/story02.js"></script>
   <script src="../assets/js/app.js"></script>
   <script src="../assets/js/lesson.js"></script>
   <script src="../assets/js/games/engine.js"></script>
