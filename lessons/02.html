@@ -28,6 +28,8 @@
       <p class="muted">Почему компьютер понимает только 0 и 1, как ими считать и как из них получаются буквы и гигабайты.</p>
     </div>
 
+    <div class="lockbox" data-lock="2"></div>
+
     <ol class="steps" aria-label="План урока">
       <li><a href="#warmup">Разминка</a></li>
       <li><a href="#t1">Теория 1</a></li>
@@ -49,10 +51,11 @@
         <div class="meme-bottom">те, кто понимает двоичный код, и те, кто нет</div>
       </figure>
       <p class="muted" style="text-align:center">Не смешно? К концу урока будет.</p>
+      <div class="gif-row"><img class="gif big" src="../assets/gif/wave.gif" alt="Бит машет лапой" width="128" height="128"></div>
     </section>
 
     <!-- Теория 1 -->
-    <section class="block" id="t1">
+    <section class="block" id="t1" data-locked>
       <span class="block-label">Теория 1 · 40 мин</span>
       <h2>Почему только 0 и 1</h2>
       <p>Внутри процессора нет цифр, букв и картинок. Там есть миллиарды крошечных выключателей, которые называются <b>транзисторы</b>. Каждый из них умеет только две вещи: пропускать ток или не пропускать.</p>
@@ -95,11 +98,11 @@
     <!-- Игра 1 -->
     <section class="block" id="g1">
       <span class="block-label game">Игра 1 · 15 мин</span>
-      <div class="minigame" data-game="bits" data-mode="toBits"></div>
+      <div class="minigame" data-config="l02-switch"></div>
     </section>
 
     <!-- Теория 2 -->
-    <section class="block" id="t2">
+    <section class="block" id="t2" data-locked>
       <span class="block-label">Теория 2 · 40 мин</span>
       <h2>Как считать в двоичном коде</h2>
       <p>В обычных числах каждая позиция «весит» в 10 раз больше соседней: единицы, десятки, сотни. В двоичном коде каждая позиция весит в <b>2 раза</b> больше. Справа налево: 1, 2, 4, 8, 16, 32, 64, 128.</p>
@@ -130,7 +133,7 @@
       </div>
 
       <div class="bit-says">
-        <span data-px="bitHappy"></span>
+        <img class="gif" src="../assets/gif/bits.gif" alt="" width="96" height="96">
         <div class="bubble">
           <span class="who">Бит Байт</span>
           Теперь мем понятен? «10» в двоичном коде это 2. Значит, типов людей всего два.
@@ -148,11 +151,11 @@
     <!-- Игра 2 -->
     <section class="block" id="g2">
       <span class="block-label game">Игра 2 · 15 мин</span>
-      <div class="minigame" data-game="bits" data-mode="toDec"></div>
+      <div class="minigame" data-config="l02-read"></div>
     </section>
 
     <!-- Теория 3 -->
-    <section class="block" id="t3">
+    <section class="block" id="t3" data-locked>
       <span class="block-label">Теория 3 · 30 мин</span>
       <h2>Байты, буквы и гигабайты</h2>
       <p>Восемь битов вместе называются <b>байт</b>. Байтом можно записать 256 разных чисел: от 0 (<code>00000000</code>) до 255 (<code>11111111</code>).</p>
@@ -185,11 +188,11 @@
     <!-- Босс -->
     <section class="block" id="boss">
       <span class="block-label game">Босс урока · 15 мин</span>
-      <div class="minigame" data-game="bits" data-mode="boss"></div>
+      <div class="minigame" data-config="l02-boss"></div>
     </section>
 
     <!-- Дома -->
-    <section class="block" id="homework">
+    <section class="block" id="homework" data-locked>
       <span class="block-label home">Дома · около 60 мин</span>
       <h2>Повтори и сделай ДЗ</h2>
       <div class="panel">
@@ -203,20 +206,22 @@
         </ul>
       </div>
       <p>Сыграй ещё раз в игры выше: задания каждый раз новые. Потом заполни домашнее задание. Делай его сам, без подсказок: так ты заработаешь XP честно.</p>
-      <!-- Ссылку на форму вставить в data-form, например https://docs.google.com/forms/d/e/.../viewform?embedded=true -->
-      <div data-homework data-form="">
-        <div class="hw-off">Форма домашнего задания появится здесь, когда учитель её добавит.</div>
-      </div>
+      <!-- Ссылка на форму берётся из assets/js/forms.js по ключу hw-02 -->
+      <div data-homework="hw-02"></div>
     </section>
   </main>
 
   <footer>
-    <div class="wrap"><a href="../index.html">← Ко всем урокам</a></div>
+    <div class="wrap"><a href="../index.html">Все уроки</a> · <a href="03.html">Урок 3 →</a></div>
   </footer>
 
+  <script src="../assets/js/course.js"></script>
+  <script src="../assets/js/forms.js"></script>
   <script src="../assets/js/pixel.js"></script>
   <script src="../assets/js/app.js"></script>
   <script src="../assets/js/lesson.js"></script>
-  <script src="../assets/js/games/bits.js"></script>
+  <script src="../assets/js/games/engine.js"></script>
+  <script src="../assets/js/games/types.js"></script>
+  <script src="../assets/js/content/lesson02.js"></script>
 </body>
 </html>
