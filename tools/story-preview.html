@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ru" data-root="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Сценки: просмотр</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0d1210">
+  <link rel="icon" href="../assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    .pv-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+    .pv-list { columns: 2 160px; font: 14px var(--mono); padding-left: 28px; }
+    .pv-id { font: 13px var(--mono); color: var(--muted); margin: 32px 0 4px; }
+    .pv-id b { color: var(--copper); }
+    .pv-art { font-size: 14px; }
+    .pv-codes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .pv-ok { color: var(--led); }
+    .pv-miss { color: var(--red); }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="../index.html"><span data-px="bit"></span>Памятьвиль</a>
+      <nav><a href="../index.html">Курс</a></nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <p class="kicker">Инструмент для проверки</p>
+    <h1>Все сценки</h1>
+    <p class="muted">Страница для учителя и разработчика: здесь можно посмотреть каждую сценку месяца, не проходя игры.</p>
+    <div class="pv-bar">
+      <button class="btn ghost" type="button" id="pv-reset">Забыть просмотренные</button>
+      <span class="muted" id="pv-note" aria-live="polite"></span>
+    </div>
+    <div class="panel pv-art" id="pv-art"></div>
+    <ol class="pv-list" id="pv-list"></ol>
+    <div id="pv-scenes"></div>
+  </main>
+
+  <script src="../assets/js/pixel.js"></script>
+  <script src="../assets/js/content/story02.js"></script>
+  <script src="../assets/js/content/story03.js"></script>
+  <script src="../assets/js/content/story04.js"></script>
+  <script>
+    (function () {
+      const ids = Object.keys(window.STORIES || {});
+      const list = document.getElementById("pv-list");
+      const box = document.getElementById("pv-scenes");
+      ids.forEach((id) => {
+        const s = window.STORIES[id];
+        list.insertAdjacentHTML("beforeend", `<li><a href="#pv-${id}">${id}</a> · ${s.beats.length}</li>`);
+        box.insertAdjacentHTML("beforeend", `<p class="pv-id" id="pv-${id}"><b>${id}</b> · ${s.title}</p><div class="story" data-story="${id}"></div>`);
+      });
+
+      // Какие спрайты нужны сценкам и какие уже нарисованы.
+      const need = new Set(["bit", "nibble", "mega", "glitch"]);
+      ids.forEach((id) => window.STORIES[id].beats.forEach((b) => {
+        Object.values(b.show || {}).forEach((o) => o && o.sprite && need.add(o.sprite));
+        let d = b.do || [];
+        if (typeof d === "string") d = d.split(";");
+        d.forEach((x) => { const p = x.trim().split(/\s+/); if (p[1] === "as" || p[1] === "emo") need.add(p[2]); });
+      }));
+      const have = (window.Pixel && window.Pixel.SPRITES) || {};
+      const sorted = [...need].sort();
+      const miss = sorted.filter((n) => !have[n]);
+      document.getElementById("pv-art").innerHTML =
+        "<b>Спрайты в сценках:</b><div class=\"pv-codes\">" + sorted.map((n) => `<code class="${have[n] ? "pv-ok" : "pv-miss"}">${n}</code>`).join("") + "</div>" +
+        (miss.length ? `<p class="pv-miss" style="margin:8px 0 0">Ещё нет арта: ${miss.join(", ")}. Пока вместо них показывается Бит.</p>` : `<p class="pv-ok" style="margin:8px 0 0">Все спрайты на месте.</p>`);
+
+      document.getElementById("pv-reset").addEventListener("click", () => {
+        try { ids.forEach((id) => localStorage.removeItem("story-seen-" + id)); } catch (e) {}
+        document.getElementById("pv-note").textContent = "Готово. Обнови страницу.";
+      });
+    })();
+  </script>
+  <script src="../assets/js/story.js"></script>
+</body>
+</html>

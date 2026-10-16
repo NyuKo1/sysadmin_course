@@ -29,6 +29,7 @@
     </div>
 
     <ol class="steps" aria-label="План урока">
+      <li><a href="#story">Серия</a></li>
       <li><a href="#warmup">Разминка</a></li>
       <li><a href="#t1">Процессор</a></li>
       <li><a href="#g1" class="game">Игра 1</a></li>
@@ -39,17 +40,23 @@
       <li><a href="#homework">Дома</a></li>
     </ol>
 
+    <!-- Серия -->
+    <section class="block" id="story">
+      <span class="block-label">Серия · 5 мин</span>
+      <div class="story" data-story="l03-intro"></div>
+    </section>
+
     <!-- Разминка -->
     <section class="block" id="warmup">
       <span class="block-label">Разминка · 15 мин</span>
       <h2>Мем недели</h2>
       <figure class="meme" aria-label="Мем">
-        <div class="meme-top">Когда открыл 47 вкладок в Chrome</div>
-        <div class="meme-pic"><span data-px="bitShock"></span></div>
-        <div class="meme-bottom">оперативная память: я ухожу из этой семьи</div>
+        <div class="meme-top">Дедушка: «Компьютер тормозит, наверное, вирус»</div>
+        <div class="meme-pic"><img class="meme-gif" src="../assets/gif/meme-47-tabs.gif" alt="Дедушка Мега у монитора с кучей вкладок и дерущимися антивирусами" width="256" height="192" loading="lazy"></div>
+        <div class="meme-bottom">47 вкладок и 3 антивируса. Решение: поставить четвёртый</div>
       </figure>
       <p class="muted" style="text-align:center">Почему браузер так любит оперативку, узнаем сегодня.</p>
-      <div class="gif-row"><img class="gif big" src="../assets/gif/idle.gif" alt="Бит моргает" width="128" height="128"></div>
+      <div class="gif-row"><img class="gif big" src="../assets/gif/mega-story.gif" alt="Дедушка Мега с дискетой" width="128" height="128"></div>
     </section>
 
     <!-- Теория 1 -->
@@ -60,7 +67,7 @@
       <p>Внутри процессора миллиарды транзисторов, тех самых выключателей из прошлого урока. Они такие маленькие, что на кончике иглы поместятся тысячи. Корпус процессора размером с печенье, а сам кристалл внутри ещё меньше, примерно с ноготь.</p>
 
       <div class="bit-says">
-        <span data-px="bit"></span>
+        <img class="gif" src="../assets/gif/bit-facepalm.gif" alt="" width="96" height="96">
         <div class="bubble">
           <span class="who">Бит Байт</span>
           Процессор не умный. Он очень-очень быстрый и очень послушный. Ум у программиста, который написал команды.
@@ -74,6 +81,12 @@
         <h3>Представь</h3>
         <p style="margin:0">Если бы ты считал вслух по одному числу в секунду без сна и еды, то до трёх миллиардов досчитал бы примерно за 95 лет. Процессор на 3 ГГц делает это за одну секунду.</p>
       </div>
+
+      <figure class="meme" aria-label="Мем">
+        <div class="meme-top">Процессор, когда кулер не чистили с 2019 года</div>
+        <div class="meme-pic"><img class="meme-gif" src="../assets/gif/meme-this-is-fine.gif" alt="Бит пьёт чай в горящей комнате, градусник на 100" width="256" height="192" loading="lazy"></div>
+        <div class="meme-bottom">100 °C. Всё нормально. Работаем</div>
+      </figure>
 
       <h3>Ядра и потоки</h3>
       <p>Раньше у процессора был один «исполнитель». Сделать его ещё быстрее стало трудно: он слишком сильно грелся. Тогда инженеры стали ставить в один процессор несколько исполнителей. Каждый называется <b>ядро</b>.</p>
@@ -99,6 +112,7 @@
 
     <!-- Теория 2 -->
     <section class="block" id="t2" data-stage="1">
+      <div class="story" data-story="l03-g1"></div>
       <span class="block-label">Теория 2 · 40 мин</span>
       <h2>Память: где компьютер держит мысли</h2>
       <p>Процессор считает быстро, но ему нужно откуда-то брать числа и куда-то класть результат. Для этого есть память. Есть она нескольких видов, и все они отличаются скоростью и объёмом.</p>
@@ -131,6 +145,12 @@
         </div>
       </div>
 
+      <figure class="meme" aria-label="Мем">
+        <div class="meme-top">Браузер, когда открываешь ещё одну вкладку</div>
+        <div class="meme-pic"><img class="meme-gif" src="../assets/gif/meme-ram-monster.gif" alt="Монстр-браузер ест планки оперативной памяти" width="256" height="192" loading="lazy"></div>
+        <div class="meme-bottom">Оперативка: было 16 ГБ, осталось 0 и воспоминания</div>
+      </figure>
+
       <h3>Оперативная память</h3>
       <p>RAM (Random Access Memory) продаётся планками. Каждая планка вставляется в длинный слот на материнской плате. Объём планок складывается: две по 8 ГБ дают 16 ГБ. На планке пишут поколение, например <code>DDR4</code> или <code>DDR5</code>. Поколения не совместимы: планка DDR5 не влезет в слот для DDR4, у них вырез в разных местах.</p>
       <p>Сколько нужно в 2026 году: для учёбы и браузера хватает 8 ГБ, для игр и монтажа удобно 16–32 ГБ.</p>
@@ -154,6 +174,7 @@
 
     <!-- Теория 3 -->
     <section class="block" id="t3" data-stage="2">
+      <div class="story" data-story="l03-g2"></div>
       <span class="block-label">Теория 3 · 30 мин</span>
       <h2>Плата, питание и охлаждение</h2>
 
@@ -179,7 +200,7 @@
 
       <figure class="meme" aria-label="Мем">
         <div class="meme-top">Ноутбук на одеяле во время игры</div>
-        <div class="meme-pic"><img class="gif" src="../assets/gif/sad.gif" alt="" width="96" height="96"></div>
+        <div class="meme-pic"><img class="gif big" src="../assets/gif/bit-overheat.gif" alt="Бит перегревается" width="128" height="128"></div>
         <div class="meme-bottom">Кулер: я работаю на 100%. Одеяло: нет.</div>
       </figure>
       <p>Если процессор перегревается, он сам снижает частоту, чтобы не сгореть. Это называется <b>троттлинг</b>: игра вдруг начинает тормозить. Если и это не помогает, компьютер просто выключается. Поэтому пыль в корпусе, высохшая термопаста и ноутбук на мягком одеяле это частые причины тормозов.</p>
@@ -190,7 +211,7 @@
       </details>
 
       <div class="bit-says">
-        <span data-px="bitHappy"></span>
+        <img class="gif" src="../assets/gif/bit-run.gif" alt="" width="96" height="96">
         <div class="bubble">
           <span class="who">Бит Байт</span>
           На следующем уроке разберём, куда компьютер складывает файлы навсегда и как он рисует картинку. Там будет мёртвый пиксель.
@@ -206,6 +227,7 @@
 
     <!-- Дома -->
     <section class="block" id="homework" data-stage="3">
+      <div class="story" data-story="l03-finale"></div>
       <span class="block-label home">Дома · около 60 мин</span>
       <h2>Повтори и сделай ДЗ</h2>
       <div class="panel">
@@ -231,6 +253,8 @@
   <script src="../assets/js/course.js"></script>
   <script src="../assets/js/forms.js"></script>
   <script src="../assets/js/pixel.js"></script>
+  <script src="../assets/js/story.js"></script>
+  <script src="../assets/js/content/story03.js"></script>
   <script src="../assets/js/app.js"></script>
   <script src="../assets/js/lesson.js"></script>
   <script src="../assets/js/games/engine.js"></script>

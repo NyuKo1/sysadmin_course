@@ -29,6 +29,7 @@
     </div>
 
     <ol class="steps" aria-label="План урока">
+      <li><a href="#story">Серия</a></li>
       <li><a href="#warmup">Разминка</a></li>
       <li><a href="#t1">Диски</a></li>
       <li><a href="#g1" class="game">Игра 1</a></li>
@@ -39,17 +40,23 @@
       <li><a href="#homework">Дома</a></li>
     </ol>
 
+    <!-- Серия -->
+    <section class="block" id="story">
+      <span class="block-label">Серия · 5 мин</span>
+      <div class="story" data-story="l04-intro"></div>
+    </section>
+
     <!-- Разминка -->
     <section class="block" id="warmup">
       <span class="block-label">Разминка · 15 мин</span>
       <h2>Мем недели</h2>
       <figure class="meme" aria-label="Мем">
-        <div class="meme-top">USB: вставляю правильно</div>
-        <div class="meme-pic"><span data-px="bitShock"></span></div>
-        <div class="meme-bottom">не лезет · переворачиваю · не лезет · переворачиваю обратно · влезло</div>
+        <div class="meme-top">USB: вставляю правильно с первого раза</div>
+        <div class="meme-pic"><img class="meme-gif" src="../assets/gif/meme-usb.gif" alt="Бит три раза переворачивает флешку" width="256" height="192" loading="lazy"></div>
+        <div class="meme-bottom">Попытка 1 и попытка 3: одна и та же сторона. Учёные бессильны</div>
       </figure>
       <p class="muted" style="text-align:center">Почему так происходит и почему USB-C эту проблему решил, расскажем в конце.</p>
-      <div class="gif-row"><img class="gif big" src="../assets/gif/wave.gif" alt="Бит машет лапой" width="128" height="128"></div>
+      <div class="gif-row"><img class="gif big" src="../assets/gif/nibble-tease.gif" alt="Нибл дразнится" width="128" height="128"></div>
     </section>
 
     <!-- Теория 1 -->
@@ -87,6 +94,12 @@
         </div>
       </div>
 
+      <figure class="meme" aria-label="Мем">
+        <div class="meme-top">Включил компьютер «на минутку»</div>
+        <div class="meme-pic"><img class="meme-gif" src="../assets/gif/meme-update-99.gif" alt="Обновление висит на 99 процентах с утра до ночи" width="256" height="192" loading="lazy"></div>
+        <div class="meme-bottom">99 % весь день, потом 100 %, потом снова 0 %</div>
+      </figure>
+
       <h3>Флешки и карты памяти</h3>
       <p>Флешка и SD-карта устроены почти как SSD: те же ячейки флеш-памяти, только меньше, проще и медленнее. Поэтому флешку не стоит использовать как единственное место для важных файлов: дешёвые флешки ломаются без предупреждения.</p>
 
@@ -109,6 +122,7 @@
 
     <!-- Теория 2 -->
     <section class="block" id="t2" data-stage="1">
+      <div class="story" data-story="l04-g1"></div>
       <span class="block-label">Теория 2 · 40 мин</span>
       <h2>Как получается картинка</h2>
 
@@ -130,12 +144,18 @@
       <p>У видеокарты есть своя память, <b>VRAM</b>. В ней лежат текстуры, модели и готовые кадры. Иногда видеокарта встроена прямо в процессор: такой графики хватает для учёбы и видео, но для тяжёлых игр нужна отдельная.</p>
 
       <div class="bit-says">
-        <span data-px="bit"></span>
+        <img class="gif" src="../assets/gif/bit-eat.gif" alt="" width="96" height="96">
         <div class="bubble">
           <span class="who">Бит Байт</span>
           Те же тысячи ядер отлично подходят для нейросетей. Поэтому ИИ-компании скупают видеокарты вагонами. Об этом в последнем месяце.
         </div>
       </div>
+
+      <figure class="meme" aria-label="Мем">
+        <div class="meme-top">Нашёл битый пиксель на новом мониторе</div>
+        <div class="meme-pic"><img class="meme-gif" src="../assets/gif/meme-dead-pixel.gif" alt="Чёрная точка на мониторе оказывается мухой и садится Биту на нос" width="256" height="192" loading="lazy"></div>
+        <div class="meme-bottom">Пиксель оказался не битым, а с крыльями</div>
+      </figure>
 
       <details class="deeper">
         <summary>Глубже: FPS и почему игра «лагает»</summary>
@@ -156,6 +176,7 @@
 
     <!-- Теория 3 -->
     <section class="block" id="t3" data-stage="2">
+      <div class="story" data-story="l04-g2"></div>
       <span class="block-label">Теория 3 · 30 мин</span>
       <h2>Разъёмы: что куда втыкать</h2>
       <p>Сзади у системного блока много разных отверстий. Хорошая новость: почти каждый разъём устроен так, что неправильно его не вставить. Если не лезет, не дави, а поверни или поищи другой.</p>
@@ -188,7 +209,7 @@
 
       <figure class="meme" aria-label="Мем">
         <div class="meme-top">Купил видеокарту за 300 000 тенге</div>
-        <div class="meme-pic"><img class="gif" src="../assets/gif/sad.gif" alt="" width="96" height="96"></div>
+        <div class="meme-pic"><img class="gif big" src="../assets/gif/bit-facepalm.gif" alt="Бит закрывает морду лапой" width="128" height="128"></div>
         <div class="meme-bottom">воткнул монитор в материнку</div>
       </figure>
 
@@ -214,6 +235,7 @@
 
     <!-- Дома -->
     <section class="block" id="homework" data-stage="3">
+      <div class="story" data-story="l04-finale"></div>
       <span class="block-label home">Дома · около 60 мин</span>
       <h2>Повтори и сделай ДЗ</h2>
       <div class="panel">
@@ -244,6 +266,8 @@
   <script src="../assets/js/course.js"></script>
   <script src="../assets/js/forms.js"></script>
   <script src="../assets/js/pixel.js"></script>
+  <script src="../assets/js/story.js"></script>
+  <script src="../assets/js/content/story04.js"></script>
   <script src="../assets/js/app.js"></script>
   <script src="../assets/js/lesson.js"></script>
   <script src="../assets/js/games/engine.js"></script>
