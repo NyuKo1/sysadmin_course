@@ -21,14 +21,12 @@
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="wrap" data-lesson="4">
     <div class="lesson-head">
       <p class="kicker">Месяц 1 · Урок 4 · Центр Памятьвиля</p>
       <h1>Хранение и картинка: диски, видеокарта, порты</h1>
       <p class="muted">Где файлы живут годами, как из чисел получается картинка на экране и что втыкать в какую дырку.</p>
     </div>
-
-    <div class="lockbox" data-lock="4"></div>
 
     <ol class="steps" aria-label="План урока">
       <li><a href="#warmup">Разминка</a></li>
@@ -55,7 +53,7 @@
     </section>
 
     <!-- Теория 1 -->
-    <section class="block" id="t1" data-locked>
+    <section class="block" id="t1">
       <span class="block-label">Теория 1 · 40 мин</span>
       <h2>Диски: память, которая не забывает</h2>
       <p>На прошлом уроке мы узнали, что оперативная память всё забывает при выключении. Значит, нужно место, где файлы будут лежать годами: система, игры, фотографии. Это <b>накопитель</b>, или просто диск. Сейчас есть два главных вида: HDD и SSD.</p>
@@ -110,7 +108,7 @@
     </section>
 
     <!-- Теория 2 -->
-    <section class="block" id="t2" data-locked>
+    <section class="block" id="t2" data-stage="1">
       <span class="block-label">Теория 2 · 40 мин</span>
       <h2>Как получается картинка</h2>
 
@@ -151,13 +149,13 @@
     </section>
 
     <!-- Игра 2 -->
-    <section class="block" id="g2">
+    <section class="block" id="g2" data-stage="1">
       <span class="block-label game">Игра 2 · 15 мин</span>
       <div class="minigame" data-config="l04-ports"></div>
     </section>
 
     <!-- Теория 3 -->
-    <section class="block" id="t3" data-locked>
+    <section class="block" id="t3" data-stage="2">
       <span class="block-label">Теория 3 · 30 мин</span>
       <h2>Разъёмы: что куда втыкать</h2>
       <p>Сзади у системного блока много разных отверстий. Хорошая новость: почти каждый разъём устроен так, что неправильно его не вставить. Если не лезет, не дави, а поверни или поищи другой.</p>
@@ -209,13 +207,13 @@
     </section>
 
     <!-- Босс -->
-    <section class="block" id="boss">
+    <section class="block" id="boss" data-stage="2">
       <span class="block-label game">Босс урока · 15 мин</span>
       <div class="minigame" data-config="l04-boss"></div>
     </section>
 
     <!-- Дома -->
-    <section class="block" id="homework" data-locked>
+    <section class="block" id="homework" data-stage="3">
       <span class="block-label home">Дома · около 60 мин</span>
       <h2>Повтори и сделай ДЗ</h2>
       <div class="panel">

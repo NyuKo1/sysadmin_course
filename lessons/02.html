@@ -21,14 +21,12 @@
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="wrap" data-lesson="2">
     <div class="lesson-head">
       <p class="kicker">Месяц 1 · Урок 2 · Центр Памятьвиля</p>
       <h1>Язык компьютера: биты и байты</h1>
       <p class="muted">Почему компьютер понимает только 0 и 1, как ими считать и как из них получаются буквы и гигабайты.</p>
     </div>
-
-    <div class="lockbox" data-lock="2"></div>
 
     <ol class="steps" aria-label="План урока">
       <li><a href="#warmup">Разминка</a></li>
@@ -55,7 +53,7 @@
     </section>
 
     <!-- Теория 1 -->
-    <section class="block" id="t1" data-locked>
+    <section class="block" id="t1">
       <span class="block-label">Теория 1 · 40 мин</span>
       <h2>Почему только 0 и 1</h2>
       <p>Внутри процессора нет цифр, букв и картинок. Там есть миллиарды крошечных выключателей, которые называются <b>транзисторы</b>. Каждый из них умеет только две вещи: пропускать ток или не пропускать.</p>
@@ -102,7 +100,7 @@
     </section>
 
     <!-- Теория 2 -->
-    <section class="block" id="t2" data-locked>
+    <section class="block" id="t2" data-stage="1">
       <span class="block-label">Теория 2 · 40 мин</span>
       <h2>Как считать в двоичном коде</h2>
       <p>В обычных числах каждая позиция «весит» в 10 раз больше соседней: единицы, десятки, сотни. В двоичном коде каждая позиция весит в <b>2 раза</b> больше. Справа налево: 1, 2, 4, 8, 16, 32, 64, 128.</p>
@@ -149,13 +147,13 @@
     </section>
 
     <!-- Игра 2 -->
-    <section class="block" id="g2">
+    <section class="block" id="g2" data-stage="1">
       <span class="block-label game">Игра 2 · 15 мин</span>
       <div class="minigame" data-config="l02-read"></div>
     </section>
 
     <!-- Теория 3 -->
-    <section class="block" id="t3" data-locked>
+    <section class="block" id="t3" data-stage="2">
       <span class="block-label">Теория 3 · 30 мин</span>
       <h2>Байты, буквы и гигабайты</h2>
       <p>Восемь битов вместе называются <b>байт</b>. Байтом можно записать 256 разных чисел: от 0 (<code>00000000</code>) до 255 (<code>11111111</code>).</p>
@@ -186,13 +184,13 @@
     </section>
 
     <!-- Босс -->
-    <section class="block" id="boss">
+    <section class="block" id="boss" data-stage="2">
       <span class="block-label game">Босс урока · 15 мин</span>
       <div class="minigame" data-config="l02-boss"></div>
     </section>
 
     <!-- Дома -->
-    <section class="block" id="homework" data-locked>
+    <section class="block" id="homework" data-stage="3">
       <span class="block-label home">Дома · около 60 мин</span>
       <h2>Повтори и сделай ДЗ</h2>
       <div class="panel">
