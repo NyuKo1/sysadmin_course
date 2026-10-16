@@ -179,6 +179,8 @@
           ${review ? `<p><b>Разбор ошибок</b></p><ol class="review">${review}</ol>` : `<p>Ни одной ошибки. Бит доволен.</p>`}
           <div class="game-row"><button class="btn" data-act="start">Ещё раз, новые задания</button></div>
         </div>`;
+      // страница урока ловит это событие и открывает следующую часть
+      if (won) el.dispatchEvent(new CustomEvent("minigame:won", { bubbles: true, detail: { id, score: s.score } }));
     }
 
     el.addEventListener("click", (e) => {

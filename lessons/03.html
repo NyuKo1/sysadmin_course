@@ -21,14 +21,12 @@
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="wrap" data-lesson="3">
     <div class="lesson-head">
       <p class="kicker">Месяц 1 · Урок 3 · Центр Памятьвиля</p>
       <h1>Мозг и память: процессор, RAM, плата</h1>
       <p class="muted">Кто в компьютере думает, где он держит мысли, почему ему жарко и откуда он берёт ток.</p>
     </div>
-
-    <div class="lockbox" data-lock="3"></div>
 
     <ol class="steps" aria-label="План урока">
       <li><a href="#warmup">Разминка</a></li>
@@ -55,7 +53,7 @@
     </section>
 
     <!-- Теория 1 -->
-    <section class="block" id="t1" data-locked>
+    <section class="block" id="t1">
       <span class="block-label">Теория 1 · 40 мин</span>
       <h2>Процессор: тот, кто думает</h2>
       <p><b>Процессор</b> (CPU, Central Processing Unit) это главная микросхема компьютера. Всё, что делает программа, в итоге превращается в простые команды для процессора: «сложи два числа», «сравни», «возьми число из памяти», «положи обратно». Таких команд он выполняет миллиарды в секунду.</p>
@@ -100,7 +98,7 @@
     </section>
 
     <!-- Теория 2 -->
-    <section class="block" id="t2" data-locked>
+    <section class="block" id="t2" data-stage="1">
       <span class="block-label">Теория 2 · 40 мин</span>
       <h2>Память: где компьютер держит мысли</h2>
       <p>Процессор считает быстро, но ему нужно откуда-то брать числа и куда-то класть результат. Для этого есть память. Есть она нескольких видов, и все они отличаются скоростью и объёмом.</p>
@@ -149,13 +147,13 @@
     </section>
 
     <!-- Игра 2 -->
-    <section class="block" id="g2">
+    <section class="block" id="g2" data-stage="1">
       <span class="block-label game">Игра 2 · 15 мин</span>
       <div class="minigame" data-config="l03-sort"></div>
     </section>
 
     <!-- Теория 3 -->
-    <section class="block" id="t3" data-locked>
+    <section class="block" id="t3" data-stage="2">
       <span class="block-label">Теория 3 · 30 мин</span>
       <h2>Плата, питание и охлаждение</h2>
 
@@ -201,13 +199,13 @@
     </section>
 
     <!-- Босс -->
-    <section class="block" id="boss">
+    <section class="block" id="boss" data-stage="2">
       <span class="block-label game">Босс урока · 15 мин</span>
       <div class="minigame" data-config="l03-boss"></div>
     </section>
 
     <!-- Дома -->
-    <section class="block" id="homework" data-locked>
+    <section class="block" id="homework" data-stage="3">
       <span class="block-label home">Дома · около 60 мин</span>
       <h2>Повтори и сделай ДЗ</h2>
       <div class="panel">

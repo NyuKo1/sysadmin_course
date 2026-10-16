@@ -1,6 +1,6 @@
-// Общее для страниц уроков: замок на теории, переключатели битов, форма ДЗ.
+// Общее для страниц уроков: цепочка теория → игра, пароль, переключатели битов, форма ДЗ.
 (function () {
-  // ---------- замок ----------
+  // ---------- пароль ----------
   // Это школьный замок, а не защита: текст лежит в странице, просто скрыт.
   function norm(s) { return s.trim().toLowerCase().replace(/ё/g, "е").replace(/[\s\-_.]+/g, ""); }
   function fingerprint(s) {
@@ -18,45 +18,104 @@
     return null;
   }
 
-  function openLesson(box) {
-    document.querySelectorAll("[data-locked]").forEach((el) => el.classList.add("unlocked"));
-    box.classList.add("open");
-    box.innerHTML = `<p style="margin:0">Теория открыта. Листай вниз или <a href="#t1">начни с первого блока</a>.</p>`;
+  const GIF = (name) => (document.documentElement.dataset.root || "./") + "assets/gif/" + name + ".gif";
+
+  // Пароль урока открывает этот урок, пароль учителя открывает всё.
+  function checkPass(value, info) {
+    const f = fingerprint(value);
+    if (window.TEACHER_PASS && f === window.TEACHER_PASS) { store("unlock-all", "1"); return true; }
+    if (info && info.pass && f === info.pass) { store("unlock-" + info.n, "1"); return true; }
+    return false;
   }
 
-  function mountLock() {
-    const box = document.querySelector("[data-lock]");
-    if (!box) return;
-    const n = Number(box.dataset.lock);
-    const info = lessonInfo(n);
-    if (!info || !info.pass) { openLesson(box); return; }
-    if (store("unlock-" + n) === "1" || store("unlock-all") === "1") { openLesson(box); return; }
-
-    box.innerHTML = `
-      <img class="gif" src="${document.documentElement.dataset.root || "./"}assets/gif/think.gif" alt="" width="96" height="96">
-      <h2>Теория под замком</h2>
-      <p class="muted" style="margin:0">Мини-игры уже открыты, они ниже. Пароль к теории и домашнему заданию учитель скажет в конце урока.</p>
-      <form>
-        <input type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="пароль" aria-label="Пароль">
-        <button class="btn" type="submit">Открыть</button>
-      </form>
+  function passForm(info, onOpen) {
+    const form = document.createElement("form");
+    form.className = "passform";
+    form.innerHTML = `
+      <input type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="пароль" aria-label="Пароль">
+      <button class="btn" type="submit">Открыть</button>
       <p class="err" aria-live="polite"></p>`;
-    box.querySelector("form").addEventListener("submit", (e) => {
+    form.addEventListener("submit", (e) => {
       e.preventDefault();
-      const input = box.querySelector("input");
-      const f = fingerprint(input.value);
-      if (f === info.pass) {
-        store("unlock-" + n, "1");
-        openLesson(box);
-      } else if (f === window.TEACHER_PASS) {
-        store("unlock-all", "1");
-        openLesson(box);
-      } else {
-        box.querySelector(".err").textContent = input.value.trim() ? "Неверный пароль, попробуй ещё раз" : "Введи пароль";
-        box.classList.add("shake");
-        setTimeout(() => box.classList.remove("shake"), 350);
+      const input = form.querySelector("input");
+      if (checkPass(input.value, info)) { onOpen(); return; }
+      form.querySelector(".err").textContent = input.value.trim() ? "Неверный пароль, попробуй ещё раз" : "Введи пароль";
+      form.classList.add("shake");
+      setTimeout(() => form.classList.remove("shake"), 350);
+    });
+    return form;
+  }
+
+  // ---------- урок по цепочке: теория → игра → следующая теория ----------
+  // Блоки с data-stage="K" открываются, когда выиграна игра из блока K-1.
+  // Открытое запоминается, дома можно перечитать. Пароль урока открывает всё сразу.
+  function mountStages() {
+    const main = document.querySelector("[data-lesson]");
+    if (!main) return;
+    const n = Number(main.dataset.lesson);
+    const info = lessonInfo(n);
+    const stages = [...document.querySelectorAll("[data-stage]")];
+    const max = Math.max(0, ...stages.map((el) => Number(el.dataset.stage)));
+    const full = !info || !info.pass || store("unlock-" + n) === "1" || store("unlock-all") === "1";
+    let open = full ? max : Math.min(max, Number(store("stage-" + n)) || 0);
+
+    const gate = document.createElement("section");
+    gate.className = "block gate";
+    gate.innerHTML = `
+      <img class="gif" src="${GIF("think")}" alt="" width="96" height="96">
+      <h2>Дальше пока закрыто</h2>
+      <p class="muted">Выиграй игру выше, и откроется следующая часть урока. Всё, что уже открыто, останется открытым: перечитывай, когда хочешь.</p>
+      <details>
+        <summary>У меня есть пароль от учителя</summary>
+        <p class="muted">Пароль учитель скажет в конце урока. Он откроет весь урок сразу.</p>
+      </details>`;
+    gate.querySelector("details").append(passForm(info, () => { open = max; apply(); }));
+
+    function apply() {
+      stages.forEach((el) => el.classList.toggle("unlocked", Number(el.dataset.stage) <= open));
+      document.querySelectorAll(".steps a[href^='#']").forEach((a) => {
+        const t = document.querySelector(a.getAttribute("href"));
+        a.classList.toggle("locked", !!(t && t.dataset.stage && Number(t.dataset.stage) > open));
+      });
+      if (open >= max) { gate.remove(); return; }
+      const shown = [...main.querySelectorAll(":scope > section.block:not(.gate)")]
+        .filter((el) => !el.dataset.stage || Number(el.dataset.stage) <= open);
+      shown[shown.length - 1].after(gate);
+    }
+
+    document.addEventListener("minigame:won", (e) => {
+      const sec = e.target.closest("[data-stage]");
+      const k = sec ? Number(sec.dataset.stage) : 0;
+      if (k + 1 <= open || k >= max) return;
+      open = k + 1;
+      store("stage-" + n, String(open));
+      apply();
+      const next = document.querySelector(`[data-stage="${open}"]`);
+      if (next && next.id) {
+        const p = document.createElement("p");
+        p.className = "game-next";
+        p.innerHTML = `Открыта следующая часть урока. <a href="#${next.id}">Листай вниз ↓</a>`;
+        e.target.querySelector(".game-intro")?.append(p);
       }
     });
+
+    apply();
+  }
+
+  // ---------- страницы учителя: открываются только паролем учителя ----------
+  function mountTeacherLock() {
+    const box = document.querySelector('[data-lock="teacher"]');
+    if (!box) return;
+    const openAll = () => {
+      document.querySelectorAll("[data-locked]").forEach((el) => el.classList.add("unlocked"));
+      box.remove();
+    };
+    if (store("unlock-all") === "1") { openAll(); return; }
+    box.innerHTML = `
+      <img class="gif" src="${GIF("laptop")}" alt="" width="96" height="96">
+      <h2>Страница учителя</h2>
+      <p class="muted" style="margin:0">Введите пароль учителя.</p>`;
+    box.append(passForm(null, openAll));
   }
 
   // ---------- наглядные переключатели битов ----------
@@ -99,6 +158,6 @@
     });
   }
 
-  document.addEventListener("DOMContentLoaded", () => { mountLock(); mountHomework(); });
+  document.addEventListener("DOMContentLoaded", () => { mountStages(); mountTeacherLock(); mountHomework(); });
   window.addEventListener("online", mountHomework);
 })();

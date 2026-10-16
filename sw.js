@@ -1,6 +1,6 @@
 // Офлайн-режим: сохраняем весь сайт на устройство при первом заходе.
 // При добавлении новых страниц допишите их в FILES и поднимите VERSION.
-const VERSION = "v2";
+const VERSION = "v3";
 const CACHE = "pamyatvil-" + VERSION;
 
 const FILES = [
@@ -29,6 +29,10 @@ const FILES = [
   "./lessons/02.html",
   "./lessons/03.html",
   "./lessons/04.html",
+  "./teacher/index.html",
+  "./teacher/02.html",
+  "./teacher/03.html",
+  "./teacher/04.html",
 ];
 
 async function cacheAll() {
