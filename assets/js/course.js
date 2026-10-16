@@ -1,10 +1,13 @@
 // Программа курса. Поле file: страница урока, когда она готова.
+// Поле pass: отпечаток пароля к теории (сделать новый: tools/password.html).
+// TEACHER_PASS открывает все уроки сразу.
+window.TEACHER_PASS = "374a2317";
 window.COURSE = [
   { month: 1, title: "Компьютер изнутри", district: "Центр Памятьвиля", lessons: [
     { n: 1, title: "Знакомство и обзор комплектующих", done: true },
-    { n: 2, title: "Язык компьютера: биты и байты", file: "lessons/02.html" },
-    { n: 3, title: "Мозг и память: процессор, RAM, плата" },
-    { n: 4, title: "Хранение и картинка: диски, видеокарта, порты" },
+    { n: 2, title: "Язык компьютера: биты и байты", file: "lessons/02.html", pass: "be93c9a2" },
+    { n: 3, title: "Мозг и память: процессор, RAM, плата", file: "lessons/03.html", pass: "3ea76f3d" },
+    { n: 4, title: "Хранение и картинка: диски, видеокарта, порты", file: "lessons/04.html", pass: "81c35bab" },
   ]},
   { month: 2, title: "Сборка, BIOS и система", district: "Процессорск", lessons: [
     { n: 5, title: "Как собирают ПК" },
