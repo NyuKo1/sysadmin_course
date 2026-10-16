@@ -1,35 +1,49 @@
-// Катсцены Памятьвиля: маленький плеер пиксельных сценок, без библиотек.
+// Комикс-сценки Памятьвиля: маленький плеер пиксельных серий, без библиотек.
 //
 // В странице: <div class="story" data-story="l03-intro"></div>
 // Сценка:     window.STORIES["l03-intro"] = { title: "...", beats: [ ... ] }
 //
 // Кадр (beat) может содержать:
 //   bg:    "street" | "street:translator" | "tower:hot" | ... (фон, вариант после двоеточия)
-//   mood:  "hot" | "alarm" | "dark" | null           (цветная подсветка поверх сцены)
+//   mood:  "hot" | "alarm" | "dark" | "glitch" | null (цветная подсветка поверх сцены)
 //   sign:  "01000010 = B" | null                     (табличка с текстом сверху)
-//   show:  { bit: { x: 30, sprite: "bitHappy", y: 12, face: -1 } }  (поставить сразу)
+//   show:  { bit: { x: 30, sprite: "bitHappy", face: -1 } }  (поставить сразу)
 //   do:    "bit enter left 30; glitch shake; mega as megaHappy"     (действия)
 //          enter left|right [x], exit left|right, move x, jump, shake, bounce,
 //          float, flip, face left|right, as <спрайт>, hide
-//   who:   "bit" (говорит персонаж) или любой текст-имя; без who это голос рассказчика
+//   who:   "bit" (говорит персонаж) или любой текст-имя; без who это подпись рассказчика
+//   name:  "Глюк (из динамика)" (другое имя над репликой)
 //   say:   "Текст реплики"
 //   fx:    "shake flash glitch bits confetti smoke:70 smoke:bit zoom:bit"
-//   wait:  1500 (для кадра без текста: через сколько мс перейти дальше)
+//
+// Вся сцена живёт в логических единицах: ширина всегда 160, 1u = ширина / 160.
+// Фон, герои и тени масштабируются вместе. Пузыри реплик живут в настоящих пикселях,
+// чтобы текст оставался читаемым, а их место считается по положению говорящего.
 (function () {
   "use strict";
   const STORIES = (window.STORIES = window.STORIES || {});
-  const W = 160, H = 90;          // логическая сетка фона в «пикселях»
-  const GROUND = 12;              // где стоят герои, % от низа сцены
+  const W = 160, H = 90;          // логическая сетка сцены: 160x90 видно всегда
+  const TOP = -70;                // запас неба сверху: на узких экранах кадр квадратный и видно 160x160
   const SEEN = "story-seen-";
   const reduced = () => !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const touchy = () => !!(window.matchMedia && matchMedia("(pointer: coarse)").matches);
 
   // Актёры. fallback: как подкрасить Бита, если своего спрайта ещё нет.
+  // eyes: где глаза (строки, буквы палитры) и чем их закрыть при моргании.
   const CAST = {
-    bit:    { name: "Бит", sprite: "bit", x: 34, scale: 1.7 },
-    nibble: { name: "Нибл", sprite: "nibble", x: 14, scale: 1.4, fallback: "grayscale(1) brightness(1.6)" },
-    mega:   { name: "Дедушка Мега", sprite: "mega", x: 58, scale: 1.9, fallback: "grayscale(1) brightness(1.1)" },
-    glitch: { name: "Глюк", sprite: "glitch", x: 82, scale: 1.8, idle: "float", fallback: "hue-rotate(250deg) saturate(2.2)" },
+    bit:    { name: "Бит", sprite: "bit", x: 34, scale: 1.5, color: "#f2a65a" },
+    nibble: { name: "Нибл", sprite: "nibble", x: 14, scale: 1.25, color: "#ff8fd8", fallback: "grayscale(1) brightness(1.6)" },
+    mega:   { name: "Дедушка Мега", sprite: "mega", x: 58, scale: 1.5, color: "#c9ced8", fallback: "grayscale(1) brightness(1.1)" },
+    glitch: { name: "Глюк", sprite: "glitch", x: 82, scale: 1.6, color: "#c58bff", idle: "float", fallback: "hue-rotate(250deg) saturate(2.2)" },
   };
+  const EYES = {
+    bit: { from: 6, to: 11, eyes: "g", fur: "o" },
+    nibble: { from: 7, to: 10, eyes: "c", fur: "n" },
+    mega: { from: 8, to: 11, eyes: "gc", fur: "e" },
+    glitch: { from: 5, to: 8, eyes: "ry", fur: "v" },
+  };
+  // Линия земли (в единицах сцены от верха кадра 0..90) для каждого фона.
+  const GROUND = { street: 83, tower: 81, servers: 83, ram: 83, warehouse: 83, monitor: 86, boot: 86 };
 
   function store(k, v) {
     try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; }
@@ -45,10 +59,39 @@
     if (c.sprite && S[c.sprite]) return { name: c.sprite, filter: "" };
     return { name: S.bit ? "bit" : null, filter: c.fallback || "" };
   }
-  function spriteSize(name) {
+  function rowsOf(name) {
     const s = sprites()[name];
-    if (!s) return { w: 16, h: 14 };
-    return { w: s.rows[0].length * (s.mirror ? 2 : 1), h: s.rows.length };
+    if (!s) return null;
+    return s.rows.map((r) => (s.mirror ? r + r.split("").reverse().join("") : r));
+  }
+  function svgOf(rows, cls) {
+    const pal = (window.Pixel && window.Pixel.PALETTE) || {};
+    let rects = "";
+    rows.forEach((row, y) => {
+      for (let x = 0; x < row.length; x++) {
+        const ch = row[x];
+        if (ch === "." || !pal[ch]) continue;
+        let run = 1;
+        while (row[x + run] === ch) run++;
+        rects += `<rect x="${x}" y="${y}" width="${run}" height="1" fill="${pal[ch]}"/>`;
+        x += run - 1;
+      }
+    });
+    return `<svg class="${cls}" viewBox="0 0 ${rows[0].length} ${rows.length}" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">${rects}</svg>`;
+  }
+  // Кадр «глаза закрыты»: глаза закрашиваем шерстью, нижнюю строку глаз делаем чёрточкой.
+  function blinkRows(rows, name) {
+    const key = Object.keys(EYES).find((k) => name.startsWith(k));
+    const e = key && EYES[key];
+    if (!e) return null;
+    const out = rows.map((r) => r.split(""));
+    let lastY = -1;
+    for (let y = e.from; y <= Math.min(e.to, rows.length - 1); y++) {
+      for (let x = 0; x < rows[y].length; x++) if (e.eyes.includes(rows[y][x])) { out[y][x] = e.fur; lastY = y; }
+    }
+    if (lastY < 0) return null;
+    for (let x = 0; x < rows[lastY].length; x++) if (e.eyes.includes(rows[lastY][x])) out[lastY][x] = "k";
+    return out.map((r) => r.join(""));
   }
 
   // ---------- фоны: пиксель-арт кодом ----------
@@ -68,9 +111,9 @@
   const pick = (rand, arr) => arr[Math.floor(rand() * arr.length)];
 
   function sky(rand, c1, c2, c3) {
-    let s = R(0, 0, W, H, c1) + R(0, 20, W, 22, c2) + R(0, 42, W, 48, c3);
+    let s = R(0, TOP, W, H - TOP, c1) + R(0, 20, W, 22, c2) + R(0, 42, W, 48, c3);
     for (let i = 0; i < 28; i++) {
-      const x = Math.floor(rand() * W), y = Math.floor(rand() * 40);
+      const x = Math.floor(rand() * W), y = TOP + Math.floor(rand() * (40 - TOP));
       s += R(x, y, 1, 1, rand() < 0.3 ? "#ffe066" : "#c9d6ff", rand() < 0.5 ? anim(rand, "st-twinkle", 2, 4) : 'opacity=".7"');
     }
     return s;
@@ -78,7 +121,7 @@
   function bitClouds(rand, n, color) {
     let s = "";
     for (let i = 0; i < n; i++) {
-      const y = 7 + i * 8 + Math.floor(rand() * 3);
+      const y = TOP + 8 + i * 13 + Math.floor(rand() * 3);
       const txt = Array.from({ length: 3 }, () => Math.floor(rand() * 16).toString(2).padStart(4, "0")).join(" ");
       s += `<g class="st-drift" style="animation-duration:${(36 + rand() * 30).toFixed(0)}s;animation-delay:-${(rand() * 60).toFixed(0)}s">${T(Math.floor(rand() * 70), y, txt, 4, color, 'opacity=".8"')}</g>`;
     }
@@ -160,7 +203,7 @@
           for (let lx = x + 3; lx < x + w - 2; lx += 5)
             s += R(lx, y, 2, 1, pick(rand, ["#5cf29a", "#6cc7ff", "#ffe066"]), anim(rand, "st-blink", 0.8, 2.5));
       });
-      if (hot) s += `<rect x="40" y="0" width="80" height="${gy}" fill="#ff6b3a" class="st-glow"/>`;
+      if (hot) s += `<rect x="40" y="${TOP}" width="80" height="${gy - TOP}" fill="#ff6b3a" class="st-glow"/>`;
       // радиатор и вентилятор
       for (let i = 0; i < 11; i++) s += R(56 + i * 4, 14, 2, 22, "#8d9aa3") ;
       s += R(54, 34, 52, 3, "#6b7880") + R(54, 12, 52, 2, "#6b7880");
@@ -188,8 +231,9 @@
     // Серверная с мигающими лампочками. Варианты: alarm (всё красное)
     servers(v) {
       const rand = rng(23), alarm = v === "alarm", gy = 72;
-      let s = R(0, 0, W, H, "#0c1210") + R(0, 0, W, 9, "#141c18");
-      for (let x = 0; x < W; x += 16) s += R(x, 0, 1, gy, "#111915");
+      let s = R(0, TOP, W, H - TOP, "#0c1210") + R(0, TOP, W, 9 - TOP, "#141c18");
+      for (let x = 0; x < W; x += 16) s += R(x, TOP, 1, gy - TOP, "#111915");
+      for (let x = 10; x < W; x += 40) s += R(x, -6, 20, 2, "#e8f4ff", 'opacity=".55"');
       // кабельный лоток
       s += R(0, 5, W, 2, "#2a3b32");
       ["#6cc7ff", "#e0a458", "#5cf29a", "#ff8fa3"].forEach((c, i) => { for (let x = 4 + i * 9; x < W; x += 38) s += R(x, 7, 1, 6 + i, c); });
@@ -237,9 +281,10 @@
     // Склад дисков. Варианты: wrong (огромный HDD крутится не туда и стучит)
     warehouse(v) {
       const rand = rng(41), wrong = v === "wrong", gy = 74;
-      let s = R(0, 0, W, H, "#151b20");
-      for (let x = 0; x < W; x += 20) s += R(x, 0, 1, gy, "#1d252c");
-      for (let y = 10; y < gy; y += 16) s += R(0, y, W, 1, "#1b2228");
+      let s = R(0, TOP, W, H - TOP, "#151b20");
+      for (let x = 0; x < W; x += 20) s += R(x, TOP, 1, gy - TOP, "#1d252c");
+      for (let x = 20; x < W; x += 60) s += R(x, -14, 1, 12, "#3a434b") + R(x - 4, -2, 9, 2, "#ffe066", 'opacity=".6"');
+      for (let y = TOP + 8; y < gy; y += 16) s += R(0, y, W, 1, "#1b2228");
       s += R(30, 2, 100, 3, "#20282f") + R(76, 5, 8, 2, wrong ? "#ff6b6b" : "#ffe066", wrong ? anim(rand, "st-blink", 0.3, 0.3) : "");
       // полки слева и справа
       [[2, 46], [114, 44]].forEach(([x, w]) => {
@@ -275,8 +320,8 @@
     // Внутри монитора: огромная сетка пикселей. Варианты: broken (мёртвые пиксели), rgb (лупа на пиксель)
     monitor(v) {
       const rand = rng(53), broken = v === "broken";
-      let s = R(0, 0, W, H, "#050607");
-      for (let cy = 0; cy < 18; cy++) {
+      let s = R(0, TOP, W, H - TOP, "#050607");
+      for (let cy = TOP / 5; cy < 18; cy++) {
         for (let cx = 0; cx < 32; cx++) {
           let c;
           const hill = 11 + Math.sin(cx / 4) * 1.6 + Math.sin(cx / 9) * 1.2;
@@ -284,7 +329,7 @@
           if (sun) c = "#ffe066";
           else if (cy > 14) c = cy % 2 ? "#2b5a2f" : "#2f6334";
           else if (cy > hill) c = cy > hill + 2 ? "#3f8f4a" : "#5cbf5a";
-          else c = ["#2c4f9a", "#3460b0", "#3d70c4", "#4a82d4", "#5a94e0", "#6aa6ea", "#7ab6f0", "#86c0f2", "#92caf4", "#9ed2f6", "#a8d8f8", "#b2def8", "#bce2f8", "#c4e6fa", "#c4e6fa"][cy];
+          else c = ["#2c4f9a", "#3460b0", "#3d70c4", "#4a82d4", "#5a94e0", "#6aa6ea", "#7ab6f0", "#86c0f2", "#92caf4", "#9ed2f6", "#a8d8f8", "#b2def8", "#bce2f8", "#c4e6fa", "#c4e6fa"][cy] || "#24458a";
           let a = "";
           if (broken) {
             const g = 70 + Math.floor(rand() * 50);
@@ -306,12 +351,12 @@
 
     // Загрузочный экран. Для крючка на следующий месяц.
     boot() {
-      let s = R(0, 0, W, H, "#000");
+      let s = R(0, TOP, W, H - TOP, "#000");
       const lines = ["Памятьвиль BIOS v1.0", "Проверка памяти ... 16384 МБ  OK", "Диски ............ OK", "Видеокарта ....... OK", "Процессорск ...... НЕТ СВЯЗИ"];
-      lines.forEach((l, i) => { s += T(8, 17 + i * 7, l, 4, i === 4 ? "#ff6b6b" : "#c9d1d9", i === 4 ? 'class="st-blink-slow"' : ""); });
-      s += T(8, 58, "Press DEL to enter SETUP", 4, "#ffe066") + R(8, 62, 3, 1, "#c9d1d9", 'class="st-blink"');
+      lines.forEach((l, i) => { s += T(8, 26 + i * 7, l, 4, i === 4 ? "#ff6b6b" : "#c9d1d9", i === 4 ? 'class="st-blink-slow"' : ""); });
+      s += T(8, 66, "Press DEL to enter SETUP", 4, "#ffe066") + R(8, 70, 3, 1, "#c9d1d9", 'class="st-blink"');
       // из темноты кто-то смотрит
-      s += `<g class="st-blink-slow">` + R(136, 76, 3, 2, "#ff6b6b") + R(145, 76, 3, 2, "#ff6b6b") + "</g>";
+      s += `<g class="st-blink-slow">` + R(136, 80, 3, 2, "#ff6b6b") + R(145, 80, 3, 2, "#ff6b6b") + "</g>";
       return s;
     },
   };
@@ -319,11 +364,12 @@
   function bgSVG(spec) {
     const [name, variant] = String(spec || "street").split(":");
     const fn = BG[name] || BG.street;
-    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">${fn(variant || "")}</svg>`;
+    return `<svg viewBox="0 ${TOP} ${W} ${H - TOP}" preserveAspectRatio="xMidYMax slice" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">${fn(variant || "")}</svg>`;
   }
 
   // ---------- плеер ----------
   const ONESHOT = ["jump", "shake", "bounce", "float", "spin", "pop"];
+  const SR = "position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;";
 
   function Player(root, id, story) {
     const cast = Object.assign({}, CAST, story.cast || {});
@@ -331,45 +377,53 @@
     const last = beats.length - 1;
     root.classList.add("story-on");
     root.innerHTML = `
-      <div class="st-stage" tabindex="0" role="group" aria-roledescription="сценка" aria-label="${esc(story.title || "Сценка")}">
+      <div class="st-head">
+        <span class="st-badge">Комикс</span>
+        <span class="st-title">Серия: ${esc(story.title || "")}</span>
+      </div>
+      <div class="st-stage" tabindex="0" role="group" aria-roledescription="комикс" aria-label="Комикс: ${esc(story.title || "")}">
         <div class="st-world"><div class="st-bg"></div><div class="st-actors"></div><div class="st-fx"></div></div>
-        <div class="st-sign" hidden></div>
-        <div class="st-mood"></div><div class="st-flash"></div>
+        <div class="st-mood"></div><div class="st-flash"></div><div class="st-vignette"></div>
         <span class="st-count" aria-hidden="true"></span>
+        <svg class="st-tail" aria-hidden="true" hidden><polygon points="0,0 0,0 0,0"/></svg>
+        <div class="st-bubble" aria-hidden="true" hidden><b class="st-bname"></b><span class="st-btext"></span></div>
+        <div class="st-top"><p class="st-caption" aria-hidden="true" hidden></p><div class="st-sign" hidden></div></div>
         <div class="st-cover">
-          <p class="st-kicker">Сценка</p>
-          <p class="st-title">${esc(story.title || "")}</p>
-          <button type="button" class="btn st-play">Смотреть</button>
+          <span data-cover-art></span>
+          <button type="button" class="btn st-play">Смотреть комикс</button>
           <p class="st-seen" hidden>Уже смотрели. Можно ещё раз.</p>
         </div>
       </div>
-      <div class="st-box" hidden>
-        <div class="st-live sr-only" aria-live="polite"></div>
-        <span class="st-who" aria-hidden="true"></span>
-        <p class="st-text" aria-hidden="true"><span class="st-ghost"></span><span class="st-typed"></span></p>
-        <div class="st-foot">
-          <button type="button" class="st-skip">Пропустить</button>
-          <span class="st-hint">Нажми, чтобы продолжить</span>
-          <button type="button" class="btn ghost st-again" hidden>Ещё раз</button>
-        </div>
+      <div style="${SR}" class="st-live" aria-live="polite"></div>
+      <div class="st-bar" hidden>
+        <button type="button" class="st-btn st-prev" aria-label="Назад, прошлая реплика">&larr;<span> Назад</span></button>
+        <button type="button" class="st-btn st-skip">Пропустить</button>
+        <button type="button" class="st-btn st-next" aria-label="Дальше">Дальше &rarr;</button>
+        <p class="st-hint"></p>
       </div>`;
     const $ = (s) => root.querySelector(s);
     const stage = $(".st-stage"), world = $(".st-world"), bgEl = $(".st-bg"), actorsEl = $(".st-actors"), fxEl = $(".st-fx");
-    const signEl = $(".st-sign"), moodEl = $(".st-mood"), flashEl = $(".st-flash"), countEl = $(".st-count");
-    const skipBtn = $(".st-skip"), cover = $(".st-cover"), box = $(".st-box"), whoEl = $(".st-who");
-    const ghost = $(".st-ghost"), typed = $(".st-typed"), live = $(".st-live"), hint = $(".st-hint"), again = $(".st-again");
+    const signEl = $(".st-sign"), capEl = $(".st-caption"), topEl = $(".st-top"), moodEl = $(".st-mood"), flashEl = $(".st-flash");
+    const bubble = $(".st-bubble"), bname = $(".st-bname"), btext = $(".st-btext"), tail = $(".st-tail"), tailPoly = tail.querySelector("polygon");
+    const cover = $(".st-cover"), bar = $(".st-bar"), countEl = $(".st-count"), hint = $(".st-hint"), live = $(".st-live");
+    const prevBtn = $(".st-prev"), nextBtn = $(".st-next"), skipBtn = $(".st-skip");
+    hint.textContent = touchy()
+      ? "Нажми на картинку: дальше. Свайп ← → листает, «←» возвращает."
+      : "Клик по картинке, пробел или → дальше · ← назад";
 
-    let st, idx = -1, playing = false, gen = 0, typing = null, autoTimer = null, bgSpec = null;
+    let st, idx = -1, playing = false, gen = 0, typing = null, bgSpec = null;
+    let speaker = null, speakTextNode = null, restNode = null;
     const views = {};
 
     function fresh() { return { bg: null, mood: null, sign: null, actors: {}, shots: [], zoom: null, fx: [] }; }
-    function actor(id) {
-      if (!st.actors[id]) {
-        const c = cast[id] || {};
-        st.actors[id] = { x: c.x != null ? c.x : 50, y: GROUND, sprite: c.sprite || id, face: 1, visible: false, idle: c.idle || null };
+    function actor(aid) {
+      if (!st.actors[aid]) {
+        const c = cast[aid] || {};
+        st.actors[aid] = { x: c.x != null ? c.x : 50, sprite: c.sprite || aid, face: 1, visible: false, idle: c.idle || null };
       }
-      return st.actors[id];
+      return st.actors[aid];
     }
+    const ground = () => GROUND[String(st.bg || "street").split(":")[0]] || 83;
 
     // Применяем кадр к состоянию (без DOM).
     function apply(b) {
@@ -377,29 +431,29 @@
       if (b.bg) st.bg = b.bg;
       if ("mood" in b) st.mood = b.mood;
       if ("sign" in b) st.sign = b.sign;
-      for (const id in b.show || {}) {
-        const a = actor(id), o = b.show[id] || {};
-        Object.assign(a, o); a.visible = o.hide ? false : true; a.enterFrom = a.exitTo = null;
+      for (const aid in b.show || {}) {
+        const a = actor(aid), o = b.show[aid] || {};
+        Object.assign(a, o); a.visible = !o.hide; a.enterFrom = a.exitTo = null;
       }
       let list = b.do || [];
       if (typeof list === "string") list = list.split(";");
-      list.map((s) => (Array.isArray(s) ? s : s.trim().split(/\s+/))).forEach(([id, verb, arg, arg2]) => {
-        if (!id || !verb) return;
-        const a = actor(id);
+      list.map((s) => (Array.isArray(s) ? s : s.trim().split(/\s+/))).forEach(([aid, verb, arg, arg2]) => {
+        if (!aid || !verb) return;
+        const a = actor(aid);
         const side = (x) => (x === "right" ? 120 : -20);
         if (verb === "enter") {
           a.enterFrom = side(arg || (a.x > 50 ? "right" : "left"));
           if (arg2 != null && !isNaN(arg2)) a.x = Number(arg2);
-          else if (!isNaN(arg)) a.x = Number(arg);
+          else if (arg != null && !isNaN(arg)) a.x = Number(arg);
           a.visible = true; a.exitTo = null;
         } else if (verb === "exit") { a.exitTo = side(arg || (a.x > 50 ? "right" : "left")); a.visible = false; }
         else if (verb === "move" || verb === "to") { a.x = Number(arg); a.walk = true; }
         else if (verb === "flip") { a.face *= -1; }
         else if (verb === "face") { a.face = arg === "left" ? -1 : 1; }
-        else if (verb === "as" || verb === "emo") { a.sprite = arg; st.shots.push([id, "pop"]); }
+        else if (verb === "as" || verb === "emo") { a.sprite = arg; st.shots.push([aid, "pop"]); }
         else if (verb === "hide") { a.visible = false; a.exitTo = null; }
         else if (verb === "show") { a.visible = true; }
-        else if (ONESHOT.includes(verb)) st.shots.push([id, verb]);
+        else if (ONESHOT.includes(verb)) st.shots.push([aid, verb]);
       });
       let fx = b.fx || [];
       if (typeof fx === "string") fx = fx.split(/\s+/).filter(Boolean);
@@ -416,17 +470,24 @@
       return isNaN(n) ? 50 : n;
     }
 
-    function viewFor(id) {
-      if (views[id]) return views[id];
+    function viewFor(aid) {
+      if (views[aid]) return views[aid];
       const el = document.createElement("div");
       el.className = "st-actor";
       el.hidden = true;
-      el.innerHTML = '<div class="st-a-act"><div class="st-a-idle"><div class="st-a-face"></div></div></div>';
+      el.dataset.actor = aid;
+      // случайный сдвиг, чтобы герои дышали и моргали не хором
+      el.style.setProperty("--breath", (2.4 + Math.random() * 1.4).toFixed(2) + "s");
+      el.style.setProperty("--breath-delay", (-Math.random() * 3).toFixed(2) + "s");
+      el.style.setProperty("--blink", (3.2 + Math.random() * 3).toFixed(2) + "s");
+      el.style.setProperty("--blink-delay", (-Math.random() * 5).toFixed(2) + "s");
+      el.innerHTML = '<span class="st-shadow"></span><div class="st-a-act"><div class="st-a-idle"><div class="st-a-breathe"><div class="st-a-face"></div></div></div></div><span class="st-tag"></span>';
       actorsEl.append(el);
-      const v = { el, act: el.firstChild, idle: el.firstChild.firstChild, face: el.firstChild.firstChild.firstChild, key: "" };
+      const act = el.querySelector(".st-a-act");
+      const v = { el, act, idle: el.querySelector(".st-a-idle"), face: el.querySelector(".st-a-face"), tag: el.querySelector(".st-tag"), key: "", h: 14, scale: 1.5 };
       el.addEventListener("transitionend", (e) => { if (e.propertyName === "left") el.classList.remove("walking"); });
-      v.act.addEventListener("animationend", () => { v.act.className = "st-a-act"; });
-      return (views[id] = v);
+      act.addEventListener("animationend", (e) => { if (e.target === act) act.className = "st-a-act"; });
+      return (views[aid] = v);
     }
 
     function render(animate) {
@@ -434,24 +495,31 @@
       if (st.bg !== bgSpec) { bgSpec = st.bg; bgEl.innerHTML = bgSVG(st.bg); }
       moodEl.className = "st-mood" + (st.mood ? " mood-" + st.mood : "");
       if (st.sign) { signEl.hidden = false; signEl.textContent = st.sign; } else signEl.hidden = true;
+      const g = ground();
 
-      for (const id in st.actors) {
-        const a = st.actors[id], v = viewFor(id), el = v.el;
-        const res = resolve(id, a.sprite, cast);
+      for (const aid in st.actors) {
+        const a = st.actors[aid], v = viewFor(aid), el = v.el;
+        const res = resolve(aid, a.sprite, cast);
         const key = res.name + "|" + res.filter;
         if (v.key !== key) {
           v.key = key;
-          const size = spriteSize(res.name);
-          const scale = (cast[id] && cast[id].scale) || 1.7;
-          el.style.width = ((size.w * scale) / W) * 100 + "%";
-          v.face.style.aspectRatio = size.w + " / " + size.h;
-          v.face.innerHTML = res.name ? window.Pixel.toSVG(res.name) : '<div class="st-noart"></div>';
+          const rows = res.name ? rowsOf(res.name) : null;
+          const scale = (cast[aid] && cast[aid].scale) || 1.5;
+          const w = rows ? rows[0].length : 16, h = rows ? rows.length : 14;
+          v.h = h; v.scale = scale;
+          el.style.setProperty("--w", String(w * scale));
+          el.style.setProperty("--h", String(h * scale));
+          if (rows) {
+            const bl = blinkRows(rows, res.name);
+            v.face.innerHTML = svgOf(rows, "px st-open") + (bl ? svgOf(bl, "px st-shut") : "");
+          } else v.face.innerHTML = '<div class="st-noart"></div>';
           v.face.style.filter = res.filter || "";
         }
+        v.tag.textContent = (cast[aid] && cast[aid].name) || aid;
+        el.style.setProperty("--c", (cast[aid] && cast[aid].color) || "#e0a458");
         v.face.style.transform = "scaleX(" + (a.face < 0 ? -1 : 1) + ")";
         v.idle.className = "st-a-idle" + (a.idle ? " idle-" + a.idle : "");
-        el.style.bottom = (a.y != null ? a.y : GROUND) + "%";
-        el.style.zIndex = String(10 + Math.round(100 - (a.y || 0)));
+        el.style.setProperty("--g", String(H - g));
         const was = !el.hidden;
         if (animate && a.enterFrom != null) {
           el.classList.add("no-tr");
@@ -468,15 +536,15 @@
         } else if (animate && a.exitTo != null && was) {
           el.classList.add("walking");
           el.style.left = a.exitTo + "%";
-          setTimeout(() => { if (myGen === gen && !st.actors[id].visible) el.hidden = true; }, 900);
+          setTimeout(() => { if (myGen === gen && !st.actors[aid].visible) el.hidden = true; }, 900);
         } else el.hidden = true;
         if (!animate) { el.classList.add("no-tr"); el.classList.remove("walking"); void el.offsetWidth; el.classList.remove("no-tr"); }
         a.enterFrom = a.exitTo = null; a.walk = false;
       }
 
       if (animate) {
-        st.shots.forEach(([id, verb]) => {
-          const v = views[id];
+        st.shots.forEach(([aid, verb]) => {
+          const v = views[aid];
           if (!v) return;
           v.act.className = "st-a-act";
           void v.act.offsetWidth;
@@ -485,7 +553,7 @@
       }
 
       if (st.zoom != null) {
-        world.style.transformOrigin = xOf(st.zoom) + "% 70%";
+        world.style.transformOrigin = xOf(st.zoom) + "% 75%";
         world.classList.add("zoomed");
       } else world.classList.remove("zoomed");
 
@@ -493,7 +561,6 @@
     }
 
     // ---------- эффекты ----------
-    // Класс эффекта снимается сам, чтобы следующий кадр был чистым.
     const fxTimers = {};
     function restart(el, cls, ms) {
       el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
@@ -538,7 +605,7 @@
           const p = document.createElement("span");
           p.className = "st-p st-smoke";
           p.style.left = x - 6 + Math.random() * 12 + "%";
-          p.style.bottom = (st.actors[target] ? GROUND + 12 : 40) + Math.random() * 6 + "%";
+          p.style.bottom = (st.actors[target] ? 30 : 45) + Math.random() * 6 + "%";
           p.style.animationDuration = (1.8 + Math.random() * 1.4).toFixed(2) + "s";
           p.style.animationDelay = (Math.random() * 1.4).toFixed(2) + "s";
           p.style.setProperty("--dx", (Math.random() * 30 - 15).toFixed(0) + "px");
@@ -547,49 +614,131 @@
       }
     }
 
-    // ---------- текст ----------
+    // ---------- реплики: пузырь у говорящего или подпись сверху ----------
     function speech(b, instant) {
       clearTimeout(typing);
       typing = null;
-      Object.values(views).forEach((v) => v.el.classList.remove("talking"));
       const text = b.say || "";
       const who = b.who || "";
-      const name = b.name || (cast[who] ? cast[who].name : who);
-      box.classList.toggle("narr", !who);
-      whoEl.textContent = name;
-      whoEl.hidden = !name;
-      live.textContent = (name ? name + ": " : "") + text;
-      ghost.textContent = text;
       const a = st.actors[who];
-      if (a && a.visible && !st.zoom) { box.style.setProperty("--tail", Math.min(92, Math.max(8, a.x)) + "%"); box.classList.add("tail"); }
-      else box.classList.remove("tail");
+      const onStage = !!(a && a.visible);
+      const name = b.name || (cast[who] ? cast[who].name : who);
+      speaker = onStage && !b.name ? who : null;
+      // говорящий подсвечен, остальные чуть темнее
+      actorsEl.classList.toggle("has-speaker", !!speaker);
+      Object.keys(views).forEach((k) => views[k].el.classList.toggle("speaking", k === speaker));
+      live.textContent = (name ? name + ": " : "") + text;
+
+      let target;
+      if (!who) {
+        bubble.hidden = true; tail.setAttribute("hidden", "");
+        capEl.hidden = false;
+        target = capEl;
+      } else {
+        capEl.hidden = true;
+        bubble.hidden = false;
+        // имя над головой у того, кто на сцене; в пузыре имя только у голоса за кадром
+        bubble.classList.toggle("voice", !speaker);
+        bname.hidden = !!speaker;
+        bname.textContent = speaker ? "" : name;
+        if (speaker) bubble.style.setProperty("--c", cast[who] && cast[who].color || "#e0a458");
+        target = btext;
+      }
+      // Текст сразу целиком: напечатанная часть видна, остаток невидим, но держит размер пузыря.
+      target.textContent = "";
+      speakTextNode = document.createTextNode("");
+      restNode = document.createElement("span");
+      restNode.style.visibility = "hidden";
+      restNode.textContent = text;
+      target.append(speakTextNode, restNode);
+      if (who) place();
       const chars = Array.from(text);
-      if (instant || reduced() || !chars.length) { typed.textContent = text; return; }
-      const v = views[who];
-      if (v) v.el.classList.add("talking");
+      if (instant || reduced() || !chars.length) { speakTextNode.data = text; restNode.textContent = ""; return; }
+      if (speaker) views[speaker].el.classList.add("talking");
       let i = 0;
-      typed.textContent = "";
       const step = () => {
         i++;
-        typed.textContent = chars.slice(0, i).join("");
-        if (i >= chars.length) { typing = null; if (v) v.el.classList.remove("talking"); return; }
+        speakTextNode.data = chars.slice(0, i).join("");
+        restNode.textContent = chars.slice(i).join("");
+        if (i >= chars.length) { typing = null; stopTalk(); return; }
         const ch = chars[i - 1];
-        typing = setTimeout(step, /[.!?…]/.test(ch) ? 260 : /[,:;]/.test(ch) ? 120 : 24);
+        typing = setTimeout(step, /[.!?…]/.test(ch) ? 240 : /[,:;]/.test(ch) ? 110 : 22);
       };
-      typing = setTimeout(step, 120);
+      typing = setTimeout(step, 150);
     }
+    function stopTalk() { Object.values(views).forEach((v) => v.el.classList.remove("talking")); }
     function finishTyping() {
       if (!typing) return false;
       clearTimeout(typing);
       typing = null;
-      typed.textContent = ghost.textContent;
-      Object.values(views).forEach((v) => v.el.classList.remove("talking"));
+      speakTextNode.data += restNode.textContent;
+      restNode.textContent = "";
+      stopTalk();
       return true;
     }
 
+    // Где поставить пузырь: над головой говорящего, а если не влезает, то сверху или сбоку. Хвостик всегда к нему.
+    function place() {
+      if (bubble.hidden) return;
+      const SW = stage.clientWidth, SH = stage.clientHeight;
+      if (!SW || !SH) return;
+      const u = SW / W, pad = 6;
+      const minTop = topEl.offsetHeight > 4 ? topEl.offsetTop + topEl.offsetHeight + 6 : pad;
+      bubble.style.maxWidth = Math.min(SW - pad * 2, Math.max(220, SW * 0.62), 440) + "px";
+      bubble.style.left = "0px"; bubble.style.top = "0px";
+      const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+      if (!speaker) {
+        // голос за кадром: справа сверху, без хвостика
+        bubble.style.left = SW - bw - pad + "px";
+        bubble.style.top = Math.max(minTop, pad) + "px";
+        tail.setAttribute("hidden", "");
+        return;
+      }
+      const a = st.actors[speaker], v = views[speaker];
+      // голова говорящего в пикселях (с учётом приближения)
+      let hx = (a.x / 100) * SW;
+      const hw = 16 * v.scale * u;
+      const headH = v.h * v.scale * u;
+      const tagH = (v.tag.offsetHeight || 20) + 7;            // ярлык с именем над головой
+      let headTop = SH - (H - ground()) * u - headH * 1.07 - tagH;
+      if (st.zoom != null) {
+        const ox = (xOf(st.zoom) / 100) * SW, oy = SH * 0.75, k = reduced() ? 1.2 : 1.3;
+        hx = ox + (hx - ox) * k; headTop = oy + (headTop - oy) * k;
+      }
+      const gap = 18;
+      let left = Math.min(Math.max(pad, hx - bw / 2), SW - bw - pad);
+      let top = headTop - gap - bh, tip, base;
+      if (top >= minTop) {
+        tip = [hx, headTop - 2];
+      } else {
+        // сверху не влезает: пробуем сбоку от головы
+        const sideTop = Math.max(minTop, Math.min(SH - bh - pad, headTop + tagH + headH * 0.3 - bh / 2));
+        const rightRoom = SW - (hx + hw / 2) - pad, leftRoom = hx - hw / 2 - pad;
+        if (Math.max(rightRoom, leftRoom) >= bw + gap) {
+          top = sideTop;
+          left = rightRoom >= leftRoom ? hx + hw / 2 + gap : hx - hw / 2 - gap - bw;
+          tip = [rightRoom >= leftRoom ? hx + hw / 2 - 2 : hx - hw / 2 + 2, headTop + tagH + headH * 0.35];
+        } else {
+          top = minTop;
+          tip = [hx, Math.max(top + bh + 4, headTop - 2)];
+        }
+      }
+      bubble.style.left = left + "px";
+      bubble.style.top = top + "px";
+      // хвостик: основание на краю пузыря, ближайшем к голове
+      const cx = Math.min(Math.max(tip[0], left + 16), left + bw - 16);
+      const cy = Math.min(Math.max(tip[1], top + 14), top + bh - 14);
+      if (tip[1] > top + bh) base = [[cx - 11, top + bh - 4], [cx + 3, top + bh - 4]];
+      else if (tip[0] > left + bw) base = [[left + bw - 4, cy - 10], [left + bw - 4, cy + 10]];
+      else base = [[left + 4, cy - 10], [left + 4, cy + 10]];
+      tail.setAttribute("viewBox", `0 0 ${SW} ${SH}`);
+      tailPoly.setAttribute("points", `${base[0][0]},${base[0][1]} ${tip[0]},${tip[1]} ${base[1][0]},${base[1][1]}`);
+      tail.removeAttribute("hidden");
+    }
+    if (window.ResizeObserver) new ResizeObserver(() => { if (playing) place(); }).observe(stage);
+
     // ---------- навигация ----------
     function go(i, animate) {
-      clearTimeout(autoTimer);
       idx = i;
       const b = beats[i];
       fxEl.textContent = "";
@@ -598,26 +747,35 @@
       speech(b, !animate);
       countEl.textContent = i + 1 + " / " + beats.length;
       const end = i === last;
-      again.hidden = !end;
-      hint.hidden = end;
+      prevBtn.disabled = i === 0;
       skipBtn.hidden = end;
+      nextBtn.innerHTML = end ? "Ещё раз" : "Дальше &rarr;";
+      nextBtn.setAttribute("aria-label", end ? "Смотреть ещё раз" : "Дальше");
+      bar.classList.toggle("fresh", i < 2);
       root.classList.toggle("st-end", end);
       if (end) store(SEEN + id, "1");
-      else if (b.wait && !b.say) autoTimer = setTimeout(() => go(i + 1, !reduced()), b.wait);
+      // если шрифт ещё грузится или менялась вёрстка, пересчитаем место пузыря
+      requestAnimationFrame(place);
     }
     function reset() {
       gen++;
-      clearTimeout(typing); typing = null; clearTimeout(autoTimer);
+      clearTimeout(typing); typing = null;
       st = fresh(); bgSpec = null;
       for (const k in views) { views[k].el.remove(); delete views[k]; }
       fxEl.textContent = "";
       world.classList.remove("zoomed");
     }
+    // Собрать состояние кадра i с нуля: фон, места, спрайты. Без анимаций.
+    function rebuild(i) {
+      reset();
+      for (let k = 0; k < i; k++) apply(beats[k]);
+      go(i, false);
+    }
     function start() {
       reset();
       playing = true;
       cover.hidden = true;
-      box.hidden = false;
+      bar.hidden = false;
       root.classList.add("st-playing");
       go(0, !reduced());
       stage.focus({ preventScroll: true });
@@ -627,32 +785,44 @@
       if (finishTyping()) return;
       if (idx < last) go(idx + 1, !reduced());
     }
-    function skip() {
-      reset();
-      for (let i = 0; i < last; i++) apply(beats[i]);
-      go(last, false);
-      again.focus({ preventScroll: true });
+    function prev() {
+      if (!playing || idx <= 0) return;
+      rebuild(idx - 1);
     }
 
     $(".st-play").addEventListener("click", (e) => { e.stopPropagation(); start(); });
-    skipBtn.addEventListener("click", (e) => { e.stopPropagation(); skip(); });
-    again.addEventListener("click", (e) => { e.stopPropagation(); start(); });
-    stage.addEventListener("click", next);
-    box.addEventListener("click", next);
+    skipBtn.addEventListener("click", () => { rebuild(last); nextBtn.focus({ preventScroll: true }); });
+    nextBtn.addEventListener("click", () => { if (idx === last && !typing) start(); else next(); });
+    prevBtn.addEventListener("click", prev);
+    let swiped = false;
+    stage.addEventListener("click", () => { if (swiped) { swiped = false; return; } next(); });
+    let sx = 0, sy = 0;
+    stage.addEventListener("touchstart", (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+    stage.addEventListener("touchend", (e) => {
+      if (!playing) return;
+      const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+      if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        swiped = true;
+        setTimeout(() => { swiped = false; }, 400);
+        if (dx < 0) next(); else prev();
+      }
+    });
     root.addEventListener("keydown", (e) => {
-      if (e.key !== " " && e.key !== "Enter") return;
-      if (e.target.closest("button")) return;
-      if (!playing) { if (e.target === stage) { e.preventDefault(); start(); } return; }
-      e.preventDefault();
-      next();
+      if (e.target.closest("button") && (e.key === " " || e.key === "Enter")) return;
+      if (!playing) {
+        if (e.target === stage && (e.key === " " || e.key === "Enter")) { e.preventDefault(); start(); }
+        return;
+      }
+      if (e.key === " " || e.key === "Enter" || e.key === "ArrowRight") { e.preventDefault(); next(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); prev(); }
     });
 
-    // Обложка: фон первого кадра.
+    // Обложка: фон первого кадра и герои первой серии.
     st = fresh();
     const firstBg = (beats.find((b) => b.bg) || {}).bg || "street";
     bgEl.innerHTML = bgSVG(firstBg);
     if (store(SEEN + id) === "1") { $(".st-seen").hidden = false; $(".st-play").textContent = "Смотреть ещё раз"; }
-    countEl.textContent = beats.length + " " + plural(beats.length, "кадр", "кадра", "кадров");
+    $("[data-cover-art]").outerHTML = `<p class="st-cover-title">${esc(story.title || "")}</p><p class="st-cover-sub">${beats.length} ${plural(beats.length, "кадр", "кадра", "кадров")}</p>`;
   }
 
   function plural(n, one, few, many) {

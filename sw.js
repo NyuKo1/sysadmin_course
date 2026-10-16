@@ -1,6 +1,6 @@
 // Офлайн-режим: сохраняем весь сайт на устройство при первом заходе.
 // При добавлении новых страниц допишите их в FILES и поднимите VERSION.
-const VERSION = "v4";
+const VERSION = "v5";
 const CACHE = "pamyatvil-" + VERSION;
 
 const FILES = [
@@ -83,20 +83,21 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// Сначала из кэша (урок работает без сети), в фоне обновляем с сервера.
+// Сначала пробуем сеть, чтобы после обновления сайта HTML, CSS и JS были одной версии.
+// Нет сети или она висит дольше 3 секунд: отдаём сохранённую копию, урок работает офлайн.
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
       const cached = await cache.match(req, { ignoreSearch: true });
-      const fresh = fetch(req)
-        .then((res) => {
-          if (res.ok) cache.put(req, res.clone());
-          return res;
-        })
-        .catch(() => cached);
-      return cached || fresh;
+      const fresh = fetch(req, { cache: "no-cache" }).then((res) => {
+        if (res.ok) cache.put(req, res.clone());
+        return res;
+      });
+      if (!cached) return fresh;
+      const timeout = new Promise((resolve) => setTimeout(() => resolve(cached), 3000));
+      return Promise.race([fresh.catch(() => cached), timeout]);
     })
   );
 });
