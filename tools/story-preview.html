@@ -64,11 +64,12 @@
         if (typeof d === "string") d = d.split(";");
         d.forEach((x) => { const p = x.trim().split(/\s+/); if (p[1] === "as" || p[1] === "emo") need.add(p[2]); });
       }));
-      const have = (window.Pixel && window.Pixel.SPRITES) || {};
+      const lo = (window.Pixel && window.Pixel.SPRITES) || {}, hd = window.HD_SPRITES || {};
+      const have = Object.assign({}, lo, hd);
       const sorted = [...need].sort();
       const miss = sorted.filter((n) => !have[n]);
       document.getElementById("pv-art").innerHTML =
-        "<b>Спрайты в сценках:</b><div class=\"pv-codes\">" + sorted.map((n) => `<code class="${have[n] ? "pv-ok" : "pv-miss"}">${n}</code>`).join("") + "</div>" +
+        "<b>Спрайты в сценках:</b><div class=\"pv-codes\">" + sorted.map((n) => `<code class="${have[n] ? "pv-ok" : "pv-miss"}">${n}${hd[n] ? " HD" : ""}</code>`).join("") + "</div>" +
         (miss.length ? `<p class="pv-miss" style="margin:8px 0 0">Ещё нет арта: ${miss.join(", ")}. Пока вместо них показывается Бит.</p>` : `<p class="pv-ok" style="margin:8px 0 0">Все спрайты на месте.</p>`);
 
       document.getElementById("pv-reset").addEventListener("click", () => {
