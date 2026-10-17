@@ -391,7 +391,7 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0 40
 @container story (max-width: 520px) { .st-stage { aspect-ratio: 1 / 1; } }
 .st-stage:focus { outline: none; }
 .st-stage:focus-visible { outline: 3px solid #111; outline-offset: 3px; }
-.st-world { --u: calc(100cqw / 160); position: absolute; inset: 0; transition: transform .7s cubic-bezier(.3,0,.2,1); }
+.st-world { --u: calc(100cqw / 320); position: absolute; inset: 0; transition: transform .7s cubic-bezier(.3,0,.2,1); }
 .st-world.zoomed { transform: scale(1.3); }
 .st-bg, .st-actors, .st-fx { position: absolute; inset: 0; }
 .st-bg svg { display: block; width: 100%; height: 100%; max-width: none; shape-rendering: crispEdges; image-rendering: pixelated; }
@@ -404,20 +404,28 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0 40
 /* герои: стоят на линии земли фона, размер в единицах сцены */
 .st-actor {
   position: absolute; z-index: 2;
-  bottom: calc(var(--u) * var(--g, 7)); width: calc(var(--u) * var(--w, 24));
+  bottom: calc(var(--u) * var(--g, 14)); width: calc(var(--u) * var(--w, 48));
   transform: translateX(-50%); transform-origin: 50% 100%;
   transition: left .8s cubic-bezier(.45,0,.4,1), filter .3s, transform .3s;
 }
 .st-actor.no-tr { transition: none; }
-.st-a-face { position: relative; height: calc(var(--u) * var(--h, 21)); transition: transform .28s steps(4); }
+.st-a-face { position: relative; height: calc(var(--u) * var(--h, 42)); transition: transform .28s steps(4); }
 .st-a-face svg { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; }
 .st-shut { opacity: 0; animation: st-blinkf var(--blink, 4s) steps(1) infinite var(--blink-delay, 0s); }
 .st-a-breathe { animation: st-breathe var(--breath, 3s) steps(2) infinite var(--breath-delay, 0s); }
 .st-noart { width: 100%; height: 100%; background: var(--copper); }
 .st-shadow {
-  position: absolute; left: 4%; right: 4%; bottom: calc(var(--u) * -1.6); height: calc(var(--u) * 3.2);
-  background: radial-gradient(closest-side, rgba(0,0,0,.6), rgba(0,0,0,0));
+  position: absolute; left: 6%; right: 6%; bottom: calc(var(--u) * -3); height: calc(var(--u) * 6);
+  background: radial-gradient(closest-side, rgba(0,0,0,.75), rgba(0,0,0,0));
 }
+/* мягкое пятно света под героем: персонажи светлее фона и не теряются */
+.st-pool {
+  position: absolute; left: -40%; right: -40%; bottom: calc(var(--u) * -6); height: calc(var(--u) * 26);
+  background: radial-gradient(closest-side, rgba(255,236,190,.16), rgba(255,236,190,0));
+  pointer-events: none;
+}
+/* тонкий светлый ореол по контуру, чтобы тёмный контур спрайта не сливался с ночным фоном */
+.st-a-idle { filter: drop-shadow(0 0 calc(var(--u) * 1) rgba(255,240,215,.38)); }
 .st-tag {
   position: absolute; left: 50%; bottom: calc(100% + 5px); transform: translateX(-50%) scale(.8);
   font: 800 12px/1 var(--sans); white-space: nowrap; color: #111;
@@ -426,8 +434,9 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0 40
 }
 .st-actor.speaking { z-index: 5; transform: translateX(-50%) scale(1.07); }
 .st-actor.speaking .st-tag { opacity: 1; transform: translateX(-50%) scale(1); }
-.st-actor.speaking .st-a-idle { filter: drop-shadow(0 0 calc(var(--u) * 1.4) var(--c, #ffe066)); }
-.has-speaker .st-actor:not(.speaking) { filter: brightness(.62) saturate(.75); }
+.st-actor.speaking .st-a-idle { filter: drop-shadow(0 0 calc(var(--u) * 1) rgba(255,240,215,.5)) drop-shadow(0 0 calc(var(--u) * 3) var(--c, #ffe066)); }
+.has-speaker .st-actor:not(.speaking) { filter: brightness(.7) saturate(.8); }
+.has-speaker .st-actor:not(.speaking) .st-pool { opacity: .4; }
 .st-actor.walking .st-a-idle { animation: st-walk .26s steps(2) infinite; }
 .st-actor.talking .st-a-breathe { animation: st-talk .32s steps(2) infinite; }
 .idle-float { animation: st-float 2.4s ease-in-out infinite; }
@@ -438,9 +447,9 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0 40
 .act-spin { animation: st-aspin .6s steps(8); }
 .act-pop { animation: st-pop .3s steps(3); }
 @keyframes st-blinkf { 0%, 92% { opacity: 0; } 93%, 96% { opacity: 1; } 97%, 100% { opacity: 0; } }
-@keyframes st-breathe { 50% { transform: translateY(calc(var(--u) * -.6)); } }
+@keyframes st-breathe { 50% { transform: translateY(calc(var(--u) * -1.2)); } }
 @keyframes st-walk { 50% { transform: translateY(-6%); } }
-@keyframes st-talk { 50% { transform: translateY(calc(var(--u) * -.8)) scaleY(.97); } }
+@keyframes st-talk { 50% { transform: translateY(calc(var(--u) * -1.6)) scaleY(.97); } }
 @keyframes st-float { 50% { transform: translateY(-10%); } }
 @keyframes st-jump { 40% { transform: translateY(-45%); } 70% { transform: translateY(0) scaleY(.9); } }
 @keyframes st-ashake { 0%, 100% { transform: none; } 20%, 60% { transform: translateX(-8%); } 40%, 80% { transform: translateX(8%); } }
@@ -518,6 +527,8 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0 40
 .st-btn:focus-visible { outline: 3px solid #111; outline-offset: 2px; }
 .st-btn:disabled { opacity: .4; cursor: default; }
 .st-next { margin-left: auto; background: #111; color: #ffd84a; }
+.st-snd { font-size: 13px; padding: 6px 10px; }
+.st-snd.off { background: #e9e2cc; color: #555; }
 .st-next:hover { background: #2a2a2a; }
 .st-count { position: absolute; right: 6px; bottom: 6px; z-index: 220; font: 700 11px/1 var(--mono); color: #111; background: #ffd84a; border: 2px solid #000; padding: 3px 5px; pointer-events: none; }
 .st-cover ~ .st-count, .story:not(.st-playing) .st-count { display: none; }
@@ -525,8 +536,9 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0 40
 .st-bar.fresh .st-hint { color: #111; font-weight: 700; }
 .st-bar.fresh .st-hint::before { content: "\25B8  "; animation: st-blinkk 1s steps(2) infinite; }
 @container story (max-width: 420px) {
-  .st-prev span { display: none; }
-  .st-btn { padding: 6px 10px; font-size: 14px; }
+  .st-prev span, .st-snd-word { display: none; }
+  .st-bar { gap: 5px; }
+  .st-btn { padding: 6px 8px; font-size: 13px; }
   .st-actor .st-tag { font-size: 11px; padding: 2px 6px; }
 }
 
@@ -565,22 +577,22 @@ footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0 40
 .st-blink-slow { animation: st-blinkk 1.6s steps(2) infinite; }
 .st-shimmer { animation: st-shim 3s steps(3) infinite; }
 .st-drift { animation: st-drift 50s linear infinite; }
-.st-spin { transform-box: view-box; animation: st-rot 1.2s steps(8) infinite; }
+.st-spin { transform-box: fill-box; transform-origin: center; animation: st-rot 1.2s steps(8) infinite; }
 .st-spin.st-fast { animation-duration: .25s; }
 .st-spin.st-slow { animation-duration: 2.4s; animation-timing-function: linear; }
 .st-spin.st-rev { animation-direction: reverse; animation-duration: .5s; }
 .st-wobble { animation-name: st-rot-wob; }
 .st-jitter { animation: st-jit .3s steps(3) infinite; }
 .st-heat { animation: st-heat 1.4s linear infinite; }
-.st-glow { animation: st-glow 1.2s ease-in-out infinite; opacity: .1; }
+.st-glow { animation: st-glow 1.6s ease-in-out infinite; opacity: .35; }
 @keyframes st-blinkk { 50% { opacity: .15; } }
 @keyframes st-shim { 50% { opacity: .55; } }
-@keyframes st-drift { from { transform: translateX(-130px); } to { transform: translateX(170px); } }
+@keyframes st-drift { from { transform: translateX(-260px); } to { transform: translateX(340px); } }
 @keyframes st-rot { to { transform: rotate(360deg); } }
 @keyframes st-rot-wob { 0% { transform: rotate(0) translate(0, 0); } 25% { transform: rotate(90deg) translate(1px, -1px); } 50% { transform: rotate(180deg) translate(-1px, 1px); } 100% { transform: rotate(360deg); } }
 @keyframes st-jit { 33% { transform: translate(1px, 0); } 66% { transform: translate(-1px, 1px); } }
-@keyframes st-heat { 0% { transform: translateY(6px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-6px); opacity: 0; } }
-@keyframes st-glow { 50% { opacity: .22; } }
+@keyframes st-heat { 0% { transform: translateY(12px); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(-12px); opacity: 0; } }
+@keyframes st-glow { 50% { opacity: .6; } }
 @media (prefers-reduced-motion: reduce) {
   .story *, .story *::before, .story *::after { animation: none !important; transition: none !important; }
   .st-world.zoomed { transform: scale(1.2); }
