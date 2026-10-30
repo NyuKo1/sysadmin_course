@@ -226,4 +226,23 @@
       });
     },
   };
+
+  // ---------- Смесь: раунды разных типов в одной игре ----------
+  // cfg.parts: [{ type: "quiz" | "match" | "sort", rounds, time, ...поля этого типа }]
+  // cfg.order: "shuffle" перемешивает раунды всех частей, иначе части идут по порядку.
+  // Новый тип, старые игры его не используют.
+  MG.types.mix = {
+    makeRounds(cfg) {
+      const all = [];
+      cfg.parts.forEach((p) => {
+        MG.types[p.type].makeRounds(p).forEach((r) => {
+          r.mixPart = p;
+          r.time = r.time || p.time || cfg.time;
+          all.push(r);
+        });
+      });
+      return cfg.order === "shuffle" ? U.shuffle(all) : all;
+    },
+    mount(root, r, api) { MG.types[r.mixPart.type].mount(root, r, api, r.mixPart); },
+  };
 })();
