@@ -7,6 +7,9 @@
   <meta name="description" content="Курс для 10–17 лет: как устроены компьютеры, программы, сети, безопасность и ИИ.">
   <meta name="theme-color" content="#0d1210">
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Памятьвиль">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
@@ -29,6 +32,19 @@
         <p>Это учебник курса. Здесь лежат все уроки, мини-игры и домашние задания. Возвращайся сюда дома, чтобы повторить то, что было на уроке.</p>
       </div>
       <img class="gif big" src="assets/gif/wave.gif" alt="Бит, кот из семьи Байт, машет лапой" width="192" height="192">
+    </section>
+
+    <section class="install" id="install" hidden>
+      <img class="gif" src="assets/gif/laptop.gif" alt="" width="64" height="64">
+      <div>
+        <h2>Поставь курс на главный экран</h2>
+        <p>Курс откроется как обычное приложение, одной иконкой, без поиска ссылки и без браузерных вкладок. И будет работать без интернета.</p>
+      </div>
+      <div class="install-how" data-install-how></div>
+      <div class="install-btns">
+        <button class="btn" type="button" data-install hidden>Установить приложение</button>
+        <button class="btn ghost" type="button" data-install-later>Не сейчас</button>
+      </div>
     </section>
 
     <div class="bit-says">
@@ -61,7 +77,7 @@
         <button class="btn" data-save-offline>Сохранить для офлайна</button>
         <span data-offline-status class="muted"><span class="status-dot"></span>Проверяю…</span>
       </div>
-      <p class="muted">Совет: в меню браузера выбери «Добавить на главный экран», и курс откроется как приложение. Домашние задания (Google Forms) работают только с интернетом.</p>
+      <p class="muted">Совет: <a href="#install" data-install-show>поставь курс на главный экран</a>, и он откроется как приложение. Домашние задания (Google Forms) работают только с интернетом.</p>
     </section>
   </main>
 
