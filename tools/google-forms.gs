@@ -10,8 +10,9 @@
  *     hw-04b (сложное ДЗ к уроку 4) и exam-m1 (экзамен месяца 1).
  *     Google попросит доступ к Формам и Таблицам: «Разрешить» (если пишет
  *     «Приложение не проверено», то «Дополнительно» → «Перейти к проекту»).
- *  3. В таблице «Памятьвиль: результаты» на листе «Ссылки» в ячейке A1 лежит
- *     блок window.FORMS = {...}. Скопируй его целиком в assets/js/forms.js.
+ *  3. В таблице «Памятьвиль: результаты» на листе «Ссылки» в столбце A сверху
+ *     лежат строки блока window.FORMS = {...}. Выдели эти ячейки (от «// Вставь»
+ *     до «};»), скопируй и замени ими всё в assets/js/forms.js.
  *  4. Открытые ответы проверяются вручную в самой форме: открой форму →
  *     «Ответы» → «Вопрос» (или «Отдельный пользователь»), поставь баллы за
  *     каждый развёрнутый ответ и нажми «Сохранить».
@@ -774,12 +775,15 @@ function writeLinks_(ss, props) {
     const form = FormApp.openById(id);
     const url = form.getPublishedUrl();
     rows.push([data.key, data.title, url, form.getEditUrl()]);
-    lines.push('  "' + data.key + '": "' + url + '",');
+    lines.push("  '" + data.key + "': '" + url + "',");
   });
-  const block = '// Вставь этот блок в assets/js/forms.js\nwindow.FORMS = {\n' + lines.join('\n') + '\n};';
-  sh.getRange(1, 1).setValue(block).setWrap(true).setFontFamily('Courier New');
-  sh.getRange(3, 1, rows.length, rows[0].length).setValues(rows);
-  sh.getRange(3, 1, 1, rows[0].length).setFontWeight('bold');
+  // По строке в ячейке и одинарные кавычки: при копировании диапазона Таблицы
+  // не добавляют свои кавычки и не удваивают наши, файл вставляется как есть.
+  const block = ['// Вставь эти строки в assets/js/forms.js', 'window.FORMS = {'].concat(lines, ['};']);
+  sh.getRange(1, 1, block.length, 1).setValues(block.map(function (l) { return [l]; })).setFontFamily('Courier New');
+  const top = block.length + 2;
+  sh.getRange(top, 1, rows.length, rows[0].length).setValues(rows);
+  sh.getRange(top, 1, 1, rows[0].length).setFontWeight('bold');
   sh.setColumnWidth(1, 420);
 }
 
