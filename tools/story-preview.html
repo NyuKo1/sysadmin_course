@@ -33,9 +33,11 @@
     <p class="muted">Страница для учителя и разработчика: здесь можно посмотреть каждую сценку месяца, не проходя игры.</p>
     <div class="pv-bar">
       <button class="btn ghost" type="button" id="pv-reset">Забыть просмотренные</button>
+      <button class="btn ghost" type="button" id="pv-forget">Забыть выборы</button>
       <span class="muted" id="pv-note" aria-live="polite"></span>
     </div>
     <div class="panel pv-art" id="pv-art"></div>
+    <div class="panel pv-art" id="pv-choices"></div>
     <ol class="pv-list" id="pv-list"></ol>
     <div id="pv-scenes"></div>
   </main>
@@ -52,7 +54,7 @@
       const box = document.getElementById("pv-scenes");
       ids.forEach((id) => {
         const s = window.STORIES[id];
-        list.insertAdjacentHTML("beforeend", `<li><a href="#pv-${id}">${id}</a> · ${s.beats.length}</li>`);
+        list.insertAdjacentHTML("beforeend", `<li><a href="#pv-${id}">${id}</a> · ${s.beats.length}${s.beats.some((b) => b.choice) ? " · выбор" : ""}</li>`);
         box.insertAdjacentHTML("beforeend", `<p class="pv-id" id="pv-${id}"><b>${id}</b> · ${s.title}</p><div class="story" data-story="${id}"></div>`);
       });
 
@@ -71,6 +73,27 @@
       document.getElementById("pv-art").innerHTML =
         "<b>Спрайты в сценках:</b><div class=\"pv-codes\">" + sorted.map((n) => `<code class="${have[n] ? "pv-ok" : "pv-miss"}">${n}${hd[n] ? " HD" : ""}</code>`).join("") + "</div>" +
         (miss.length ? `<p class="pv-miss" style="margin:8px 0 0">Ещё нет арта: ${miss.join(", ")}. Пока вместо них показывается Бит.</p>` : `<p class="pv-ok" style="margin:8px 0 0">Все спрайты на месте.</p>`);
+
+      // Выборы (визуальная новелла): что уже ответили и где это используют.
+      const asks = [];
+      ids.forEach((id) => window.STORIES[id].beats.forEach((b) => {
+        if (b.choice && b.remember) asks.push({ id, key: b.remember, opts: b.choice.map((o, k) => String(o.value != null ? o.value : o.go != null ? o.go : k + 1)) });
+      }));
+      const saved = () => { try { return JSON.parse(localStorage.getItem("story-choices") || "{}") || {}; } catch (e) { return {}; } };
+      function showChoices() {
+        const now = saved();
+        document.getElementById("pv-choices").innerHTML = asks.length
+          ? "<b>Выборы в сценках</b> (ответ сохраняется, финал и другие сценки на него ссылаются):<div class=\"pv-codes\">" +
+            asks.map((a) => `<code title="${a.id}">${a.key} = <span class="${now[a.key] != null ? "pv-ok" : "pv-miss"}">${now[a.key] != null ? now[a.key] : "нет ответа"}</span> (${a.opts.join(" | ")})</code>`).join("") + "</div>"
+          : "<b>Выборов в сценках нет.</b>";
+      }
+      showChoices();
+      setInterval(showChoices, 800);
+      document.getElementById("pv-forget").addEventListener("click", () => {
+        try { localStorage.removeItem("story-choices"); } catch (e) {}
+        showChoices();
+        document.getElementById("pv-note").textContent = "Выборы забыты. Сценки, которые уже идут, держат свои ответы до перезапуска.";
+      });
 
       document.getElementById("pv-reset").addEventListener("click", () => {
         try { ids.forEach((id) => localStorage.removeItem("story-seen-" + id)); } catch (e) {}

@@ -16,6 +16,22 @@
 //   say:   "Текст реплики"
 //   fx:    "shake flash glitch bits confetti smoke:70 smoke:bit zoom:bit"
 //   sfx:   "alarm" | "boot beep" (необязательно: свои звуки поверх автоматических, см. SFX ниже)
+//   tone:  "think" | "shout" | "whisper"              (вид пузыря: мысль, крик, шёпот)
+//   to:    "reader"  говорящий делает шаг к камере, смотрит прямо и обращается к ученику
+//
+// Выборы как в визуальной новелле (всё необязательно, старые сценки играют как раньше):
+//   choice:   [{ label: "Да, зашло", go: "yes", value: "yes" }, ...]  кнопки в пузыре (или под подписью).
+//             go: метка кадра, куда перейти (без go: следующий кадр). value: что запомнить (по умолчанию go).
+//             «Дальше» и нажатие на картинку не работают, пока не выбрали. Клавиши 1-9, стрелки, Enter.
+//   remember: "l04-liked"  запомнить ответ в localStorage «story-choices» (видят и другие сценки, уроки:
+//             Story.choice("l04-liked")). Внутри своей сценки учитывается только ответ этого просмотра.
+//   required: true   «Пропустить» остановится на этом вопросе. Без него пропуск идёт мимо, ничего не выбирая,
+//   after:    "label" и тогда переходит на after (если его нет, то как обычно: goto или следующий кадр).
+//   label:    "yes"   метка кадра для go/goto.
+//   goto:     "end" | "label"  после этого кадра перейти к метке; неизвестная метка (например "end") = конец.
+//   if:       { "l04-liked": "yes" }  показать кадр, только если ответ совпал. Значение: строка, массив строк,
+//             "*" (ответ есть) или null (ответа нет). Неподходящие кадры пропускаются целиком.
+//   «Назад» идёт по пройденному пути, через выбор тоже: вернулся к вопросу, можно ответить иначе.
 //
 // Сцена живёт в логических пикселях: ширина всегда 320, видимая высота 180 (1u = ширина / 320).
 // Фон, герои и тени масштабируются вместе. Пузыри реплик живут в настоящих пикселях,
@@ -52,6 +68,12 @@
   function store(k, v) {
     try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; }
   }
+  // Ответы на выборы всех сценок: { "l04-liked": "yes", ... }
+  const CHOICES = "story-choices";
+  function loadChoices() {
+    try { const o = JSON.parse(store(CHOICES) || "{}"); return o && typeof o === "object" ? o : {}; } catch (e) { return {}; }
+  }
+  function saveChoice(k, v) { const all = loadChoices(); all[k] = v; store(CHOICES, JSON.stringify(all)); }
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   // ---------- спрайты ----------
@@ -125,7 +147,7 @@
   //   shake глухой удар, flash электрический «вжик», bits звёздочки, confetti фанфара, smoke шипение,
   //   zoom свист, enter/exit шаги (у Глюка свист), jump/bounce «боинг», смена эмоции короткий щелчок.
   //   Явные звуки для поля sfx: alarm, beep, boot, click, fanfare, thump, zap, whoosh, hiss, twinkle,
-  //   glitch, steps, boing, hum, sad.
+  //   glitch, steps, boing, hum, sad, hover, pick.
   const SFX = (function () {
     const KEY = "story-sound";
     let ctx = null, master = null, noiseBuf = null, crushCurve = null;
@@ -215,6 +237,9 @@
       boot: () => { tone(1000, 0.12, "square", 0.06, 0, 0, 3000); tone(55, 0.8, "sawtooth", 0.08, 50, 0.15, 400); },
       hum: () => tone(60, 1.2, "sawtooth", 0.06, 58, 0, 300),
       sad: () => { [392, 370, 349, 311].forEach((f, i) => tone(f, 0.22, "triangle", 0.07, 0, i * 0.2)); },
+      // выбор ответа: тихий тик при наведении и двойной «дзынь» при выборе
+      hover: () => tone(2100, 0.018, "square", 0.018, 0, 0, 4000),
+      pick: () => { tone(880, 0.06, "triangle", 0.07); tone(1320, 0.1, "triangle", 0.06, 0, 0.06); },
     };
     LIB.bits = LIB.twinkle; LIB.confetti = LIB.fanfare; LIB.smoke = LIB.hiss; LIB.zoom = LIB.whoosh;
     LIB.shake = LIB.thump; LIB.flash = LIB.zap; LIB.footsteps = LIB.steps; LIB.jump = LIB.boing;
@@ -666,7 +691,7 @@
         <div class="st-mood"></div><div class="st-flash"></div><div class="st-vignette"></div>
         <span class="st-count" aria-hidden="true"></span>
         <svg class="st-tail" aria-hidden="true" hidden><polygon points="0,0 0,0 0,0"/></svg>
-        <div class="st-bubble" aria-hidden="true" hidden><b class="st-bname"></b><span class="st-btext"></span></div>
+        <div class="st-bubble" hidden><b class="st-bname" aria-hidden="true"></b><span class="st-btext" aria-hidden="true"></span></div>
         <div class="st-top"><p class="st-caption" aria-hidden="true" hidden></p><div class="st-sign" hidden></div></div>
         <div class="st-cover">
           <span data-cover-art></span>
@@ -688,6 +713,12 @@
     const bubble = $(".st-bubble"), bname = $(".st-bname"), btext = $(".st-btext"), tail = $(".st-tail"), tailPoly = tail.querySelector("polygon");
     const cover = $(".st-cover"), bar = $(".st-bar"), countEl = $(".st-count"), hint = $(".st-hint"), live = $(".st-live");
     const prevBtn = $(".st-prev"), nextBtn = $(".st-next"), skipBtn = $(".st-skip"), sndBtn = $(".st-snd");
+    const choicesEl = document.createElement("div");
+    choicesEl.className = "st-choices";
+    choicesEl.setAttribute("role", "group");
+    choicesEl.setAttribute("aria-label", "Выбери ответ");
+    choicesEl.hidden = true;
+    bubble.append(choicesEl);
     function sndLabel() {
       sndBtn.innerHTML = '<span aria-hidden="true">&#9834;</span> <span class="st-snd-word">Звук: </span>' + (SFX.on ? "вкл" : "выкл");
       sndBtn.setAttribute("aria-label", "Звук");
@@ -701,13 +732,81 @@
       SFX.play("click");
     });
     sndBtn.addEventListener("st-sound", sndLabel);
-    hint.textContent = touchy()
+    const HINT = touchy()
       ? "Нажми на картинку: дальше. Свайп ← → листает, «←» возвращает."
       : "Клик по картинке, пробел или → дальше · ← назад";
+    const hintPick = (n) => (touchy() ? "Выбери ответ: нажми на вариант." : "Выбери ответ: клик, цифра 1–" + n + " или стрелки и Enter.");
+    hint.textContent = HINT;
 
     let st, idx = -1, playing = false, gen = 0, typing = null, bgSpec = null;
     let speaker = null, speakTextNode = null, restNode = null;
     const views = {};
+
+    // ---------- ветки и выборы ----------
+    // path: номера кадров, которые прошли в этом просмотре (по нему ходит «Назад»).
+    // picks: номер кадра с вопросом → номер выбранного варианта (в этом просмотре).
+    let path = [], picks = {}, atEnd = false, picking = false;
+    const labels = {};
+    beats.forEach((b, i) => { if (b.label != null && !(b.label in labels)) labels[b.label] = i; });
+    const branchy = beats.some((b) => b.choice || b.goto != null || b.if);
+    const ownKeys = new Set(beats.filter((b) => b.choice && b.remember).map((b) => b.remember));
+    const valueOf = (b, k) => {
+      const o = b.choice[k] || {};
+      return String(o.value != null ? o.value : o.go != null ? o.go : k + 1);
+    };
+    // Текущий ответ по ключу: из своей сценки только ответ этого просмотра, иначе сохранённый.
+    function memo(key) {
+      if (ownKeys.has(key)) {
+        for (const i of path) if (beats[i].remember === key && picks[i] != null) return valueOf(beats[i], picks[i]);
+        return null;
+      }
+      const v = loadChoices()[key];
+      return v == null ? null : String(v);
+    }
+    function ok(b) {
+      if (!b || !b.if) return true;
+      return Object.keys(b.if).every((key) => {
+        const want = b.if[key], have = memo(key);
+        if (want === "*") return have != null;
+        if (want == null || want === "") return have == null;
+        if (Array.isArray(want)) return want.some((w) => (w == null || w === "" ? have == null : String(w) === have));
+        return String(want) === have;
+      });
+    }
+    function target(lbl) {
+      if (lbl in labels) return labels[lbl];
+      if (lbl !== "end" && window.console) console.warn("story " + id + ": нет метки " + lbl);
+      return -1;
+    }
+    function skipIfs(j) {
+      while (j >= 0 && j <= last && !ok(beats[j])) j++;
+      return j > last ? -1 : j;
+    }
+    // Куда идти после кадра i (k: выбранный вариант или undefined). -1: конец.
+    function after(i, k) {
+      const b = beats[i];
+      let dest = null;
+      if (b.choice) {
+        const o = k != null ? b.choice[k] : null;
+        if (o && o.go != null) dest = o.go;
+        else if (!o && b.after != null) dest = b.after;
+      }
+      if (dest == null && b.goto != null) dest = b.goto;
+      return skipIfs(dest == null ? i + 1 : target(dest));
+    }
+    const needsPick = (i) => !!(beats[i] && beats[i].choice && beats[i].choice.length && picks[i] == null);
+    // Сколько кадров примерно осталось (на невыбранных вопросах берём первый вариант).
+    function remaining(i) {
+      let n = 0, guard = 0;
+      while (guard++ < beats.length * 4) {
+        const b = beats[i];
+        const k = picks[i] != null ? picks[i] : b.choice && b.choice.length ? 0 : undefined;
+        i = after(i, k);
+        if (i < 0) break;
+        n++;
+      }
+      return n;
+    }
 
     function fresh() { return { bg: null, mood: null, sign: null, actors: {}, shots: [], zoom: null, fx: [] }; }
     function actor(aid) {
@@ -920,10 +1019,20 @@
       const onStage = !!(a && a.visible);
       const name = b.name || (cast[who] ? cast[who].name : who);
       speaker = onStage && !b.name ? who : null;
-      // говорящий подсвечен, остальные чуть темнее
+      // говорящий подсвечен, остальные чуть темнее; to: "reader" — шаг к камере, лицом к ученику
+      const facing = !!(speaker && b.to === "reader");
       actorsEl.classList.toggle("has-speaker", !!speaker);
-      Object.keys(views).forEach((k) => views[k].el.classList.toggle("speaking", k === speaker));
-      live.textContent = (name ? name + ": " : "") + text;
+      Object.keys(views).forEach((k) => {
+        views[k].el.classList.toggle("speaking", k === speaker);
+        views[k].el.classList.toggle("to-reader", facing && k === speaker);
+      });
+      stage.classList.toggle("st-reader", facing);
+      bubble.classList.toggle("to-reader", facing);
+      ["think", "shout", "whisper"].forEach((t) => bubble.classList.toggle("tone-" + t, b.tone === t));
+      const opts = Array.isArray(b.choice) ? b.choice : [];
+      live.textContent = (name ? name + ": " : "") + text +
+        (opts.length ? " Варианты: " + opts.map((o, k) => k + 1 + ". " + o.label).join("; ") + "." : "");
+      showChoices(opts, who ? bubble : topEl);
 
       let target;
       if (!who) {
@@ -968,6 +1077,70 @@
       };
       typing = setTimeout(step, 150);
     }
+    // Кнопки выбора: в пузыре говорящего или под подписью рассказчика.
+    function showChoices(opts, host) {
+      choicesEl.textContent = "";
+      choicesEl.classList.remove("nudge");
+      picking = false;
+      if (!opts.length) { choicesEl.hidden = true; return; }
+      if (host === topEl) { if (choicesEl.previousElementSibling !== capEl) capEl.after(choicesEl); }
+      else if (choicesEl.parentNode !== bubble) bubble.append(choicesEl);
+      opts.forEach((o, k) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "st-opt" + (picks[idx] === k ? " picked" : "");
+        btn.dataset.k = String(k);
+        if (picks[idx] === k) btn.setAttribute("aria-pressed", "true");
+        btn.innerHTML = `<span class="st-okey" aria-hidden="true">${k + 1}</span><span class="st-olabel">${esc(o.label || "")}</span>`;
+        choicesEl.append(btn);
+      });
+      choicesEl.hidden = false;
+    }
+    const optButtons = () => Array.from(choicesEl.querySelectorAll(".st-opt"));
+    let lastHover = 0;
+    function hoverSound() {
+      const t = Date.now();
+      if (t - lastHover > 70) { lastHover = t; SFX.play("hover"); }
+    }
+    choicesEl.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const btn = e.target.closest(".st-opt");
+      if (btn && !btn.disabled) pick(Number(btn.dataset.k));
+    });
+    choicesEl.addEventListener("pointerenter", (e) => { if (e.target.closest && e.target.closest(".st-opt")) hoverSound(); }, true);
+    choicesEl.addEventListener("focusin", hoverSound);
+    function pick(k) {
+      const b = beats[idx];
+      if (!playing || picking || !b || !b.choice || !b.choice[k]) return;
+      SFX.unlock();
+      finishTyping();
+      picking = true;
+      picks[idx] = k;
+      if (b.remember) saveChoice(b.remember, valueOf(b, k));
+      SFX.play("pick");
+      const hadFocus = choicesEl.contains(document.activeElement);
+      optButtons().forEach((btn, j) => {
+        btn.classList.toggle("picked", j === k);
+        btn.setAttribute("aria-pressed", j === k ? "true" : "false");
+        btn.disabled = true;
+      });
+      const myGen = gen, at = idx;
+      setTimeout(() => {
+        if (myGen !== gen || idx !== at || !playing) return;
+        picking = false;
+        if (hadFocus) stage.focus({ preventScroll: true });
+        const j = after(at, k);
+        if (j < 0) { go(at, false); nextBtn.focus({ preventScroll: true }); return; }
+        path.push(j);
+        go(j, !reduced(), true);
+      }, reduced() ? 0 : 260);
+    }
+    function nudge() {
+      SFX.play("click");
+      if (!reduced()) restart(choicesEl, "nudge", 450);
+      const first = choicesEl.querySelector(".st-opt");
+      if (first && root.contains(document.activeElement)) first.focus({ preventScroll: true });
+    }
     function stopTalk() { Object.values(views).forEach((v) => v.el.classList.remove("talking")); }
     function finishTyping() {
       if (!typing) return false;
@@ -986,13 +1159,16 @@
       if (!SW || !SH) return;
       const u = SW / W, pad = 6;
       const minTop = topEl.offsetHeight > 4 ? topEl.offsetTop + topEl.offsetHeight + 6 : pad;
-      bubble.style.maxWidth = Math.min(SW - pad * 2, Math.max(220, SW * 0.62), 440) + "px";
+      const asks = !choicesEl.hidden && choicesEl.parentNode === bubble;
+      bubble.style.maxWidth = (asks ? Math.min(SW - pad * 2, Math.max(280, SW * 0.7), 520) : Math.min(SW - pad * 2, Math.max(220, SW * 0.62), 440)) + "px";
       bubble.style.left = "0px"; bubble.style.top = "0px";
       const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+      // с кнопками выбора пузырь целиком внутри кадра
+      const fit = (t) => (asks ? Math.max(pad, Math.min(minTop, SH - bh - pad), Math.min(t, SH - bh - pad)) : t);
       if (!speaker) {
         // голос за кадром: справа сверху, без хвостика
         bubble.style.left = SW - bw - pad + "px";
-        bubble.style.top = Math.max(minTop, pad) + "px";
+        bubble.style.top = fit(Math.max(minTop, pad)) + "px";
         tail.setAttribute("hidden", "");
         return;
       }
@@ -1002,7 +1178,9 @@
       const hw = v.wu * u;
       const headH = v.hu * u;
       const tagH = (v.tag.offsetHeight || 20) + 7;            // ярлык с именем над головой
-      let headTop = SH - (H - ground()) * u - headH * 1.07 - tagH;
+      // к ученику (to-reader) герой крупнее и на шаг ближе: см. .st-actor.to-reader в CSS
+      const near = v.el.classList.contains("to-reader");
+      let headTop = SH - (H - ground()) * u + (near ? 8 * u : 0) - headH * (near ? 1.3 : 1.07) - tagH;
       if (st.zoom != null) {
         const ox = (xOf(st.zoom) / 100) * SW, oy = SH * 0.75, k = reduced() ? 1.2 : 1.3;
         hx = ox + (hx - ox) * k; headTop = oy + (headTop - oy) * k;
@@ -1025,6 +1203,7 @@
           tip = [hx, Math.max(top + bh + 4, headTop - 2)];
         }
       }
+      top = fit(top);
       bubble.style.left = left + "px";
       bubble.style.top = top + "px";
       // хвостик: основание на краю пузыря, ближайшем к голове
@@ -1068,59 +1247,94 @@
       loudNow = !!loud;
       if (loud) beatSounds(b);
       speech(b, !animate);
-      countEl.textContent = i + 1 + " / " + beats.length;
-      const end = i === last;
-      prevBtn.disabled = i === 0;
-      skipBtn.hidden = end;
-      nextBtn.innerHTML = end ? "Ещё раз" : "Дальше &rarr;";
-      nextBtn.setAttribute("aria-label", end ? "Смотреть ещё раз" : "Дальше");
-      bar.classList.toggle("fresh", i < 2);
+      const need = needsPick(i);
+      // без веток это ровно «i + 1 / всего кадров», как раньше
+      countEl.textContent = path.length + " / " + (path.length + remaining(i));
+      const end = !need && after(i, picks[i]) < 0;
+      atEnd = end;
+      prevBtn.disabled = path.length <= 1;
+      skipBtn.hidden = end || (need && !!b.required);
+      nextBtn.disabled = need;
+      nextBtn.innerHTML = end ? "Ещё раз" : need ? "Выбери ответ" : "Дальше &rarr;";
+      nextBtn.setAttribute("aria-label", end ? "Смотреть ещё раз" : need ? "Сначала выбери ответ" : "Дальше");
+      hint.textContent = need ? hintPick(b.choice.length) : HINT;
+      bar.classList.toggle("fresh", path.length <= 2 || need);
+      root.classList.toggle("st-asking", need);
       root.classList.toggle("st-end", end);
       if (end) store(SEEN + id, "1");
+      // вопрос с клавиатуры: фокус на выбранный (или первый) вариант
+      if (b.choice && !choicesEl.hidden && root.contains(document.activeElement)) {
+        const btns = optButtons();
+        const f = btns[picks[i] != null ? picks[i] : 0];
+        if (f) f.focus({ preventScroll: true });
+      }
       // если шрифт ещё грузится или менялась вёрстка, пересчитаем место пузыря
       requestAnimationFrame(place);
     }
     function reset() {
       gen++;
       clearTimeout(typing); typing = null;
+      picking = false;
       st = fresh(); bgSpec = null;
       for (const k in views) { views[k].el.remove(); delete views[k]; }
       fxEl.textContent = "";
       world.classList.remove("zoomed");
     }
-    // Собрать состояние кадра i с нуля: фон, места, спрайты. Без анимаций.
-    function rebuild(i) {
+    // Собрать состояние последнего кадра пути с нуля: фон, места, спрайты. Без анимаций.
+    function rebuild() {
       reset();
-      for (let k = 0; k < i; k++) apply(beats[k]);
-      go(i, false);
+      for (let k = 0; k < path.length - 1; k++) apply(beats[path[k]]);
+      go(path[path.length - 1], false);
     }
     function start() {
       reset();
       playing = true;
+      picks = {};
+      path = [skipIfs(0) < 0 ? 0 : skipIfs(0)];
       cover.hidden = true;
       bar.hidden = false;
       root.classList.add("st-playing");
       SFX.unlock();
       SFX.play("next");
-      go(0, !reduced(), true);
+      go(path[0], !reduced(), true);
       stage.focus({ preventScroll: true });
     }
     function next() {
       if (!playing) return;
       SFX.unlock();
       if (finishTyping()) return;
-      if (idx < last) { SFX.play("next"); go(idx + 1, !reduced(), true); }
+      if (needsPick(idx)) { nudge(); return; }
+      const j = after(idx, picks[idx]);
+      if (j >= 0) { SFX.play("next"); path.push(j); go(j, !reduced(), true); }
     }
     function prev() {
-      if (!playing || idx <= 0) return;
+      if (!playing || path.length <= 1) return;
       SFX.unlock();
       SFX.play("back");
-      rebuild(idx - 1);
+      path.pop();
+      rebuild();
+    }
+    // Пропуск: до конца, но остановиться на обязательном вопросе без ответа.
+    function skip() {
+      if (!playing) return;
+      SFX.unlock();
+      SFX.play("whoosh");
+      let i = idx, guard = 0;
+      while (guard++ < beats.length * 4) {
+        if (needsPick(i) && beats[i].required) break;
+        const j = after(i, picks[i]);
+        if (j < 0) break;
+        path.push(j);
+        i = j;
+      }
+      rebuild();
+      if (needsPick(idx)) { const f = optButtons()[0]; if (f) f.focus({ preventScroll: true }); }
+      else nextBtn.focus({ preventScroll: true });
     }
 
     $(".st-play").addEventListener("click", (e) => { e.stopPropagation(); start(); });
-    skipBtn.addEventListener("click", () => { SFX.unlock(); SFX.play("whoosh"); rebuild(last); nextBtn.focus({ preventScroll: true }); });
-    nextBtn.addEventListener("click", () => { if (idx === last && !typing) start(); else next(); });
+    skipBtn.addEventListener("click", skip);
+    nextBtn.addEventListener("click", () => { if (atEnd && !typing) start(); else next(); });
     prevBtn.addEventListener("click", prev);
     let swiped = false;
     stage.addEventListener("click", () => { if (swiped) { swiped = false; return; } next(); });
@@ -1141,6 +1355,19 @@
         if (e.target === stage && (e.key === " " || e.key === "Enter")) { e.preventDefault(); start(); }
         return;
       }
+      const b = beats[idx];
+      if (b && b.choice && !choicesEl.hidden && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        // цифры выбирают вариант; стрелки ходят по вариантам, когда фокус на них (или ответа ещё нет)
+        if (/^[1-9]$/.test(e.key) && Number(e.key) <= b.choice.length) { e.preventDefault(); pick(Number(e.key) - 1); return; }
+        const btns = optButtons(), at = btns.indexOf(document.activeElement);
+        const onOpt = at >= 0, step = { ArrowDown: 1, ArrowUp: -1, ArrowRight: 1, ArrowLeft: -1 }[e.key];
+        if (step && (onOpt || ((e.key === "ArrowDown" || e.key === "ArrowUp") && needsPick(idx)))) {
+          e.preventDefault();
+          const n = btns.length, to = onOpt ? (at + step + n) % n : step > 0 ? 0 : n - 1;
+          if (btns[to]) btns[to].focus({ preventScroll: true });
+          return;
+        }
+      }
       if (e.key === " " || e.key === "Enter" || e.key === "ArrowRight") { e.preventDefault(); next(); }
       else if (e.key === "ArrowLeft") { e.preventDefault(); prev(); }
     });
@@ -1150,7 +1377,11 @@
     const firstBg = (beats.find((b) => b.bg) || {}).bg || "street";
     bgEl.innerHTML = bgSVG(firstBg);
     if (store(SEEN + id) === "1") { $(".st-seen").hidden = false; $(".st-play").textContent = "Смотреть ещё раз"; }
-    $("[data-cover-art]").outerHTML = `<p class="st-cover-title">${esc(story.title || "")}</p><p class="st-cover-sub">${beats.length} ${plural(beats.length, "кадр", "кадра", "кадров")}</p>`;
+    // С ветками число кадров зависит от выборов: показываем примерное по первым вариантам.
+    const n0 = branchy ? (() => { path = [Math.max(0, skipIfs(0))]; const n = 1 + remaining(path[0]); path = []; return n; })() : beats.length;
+    const sub = (branchy ? "около " : "") + n0 + " " + plural(n0, "кадр", "кадра", "кадров") +
+      (beats.some((b) => b.choice) ? " · с выбором" : "");
+    $("[data-cover-art]").outerHTML = `<p class="st-cover-title">${esc(story.title || "")}</p><p class="st-cover-sub">${esc(sub)}</p>`;
   }
 
   function plural(n, one, few, many) {
@@ -1171,7 +1402,13 @@
     });
   }
 
-  window.Story = { mount, CAST, BG: Object.keys(BG), seen: (id) => store(SEEN + id) === "1" };
+  window.Story = {
+    mount, CAST, BG: Object.keys(BG), seen: (id) => store(SEEN + id) === "1",
+    // ответы на выборы сценок: Story.choice("l04-liked") → "yes" | null
+    choices: loadChoices,
+    choice: (k) => { const v = loadChoices()[k]; return v == null ? null : String(v); },
+    forgetChoices: () => store(CHOICES, "{}"),
+  };
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", () => mount());
   else mount();
 })();
