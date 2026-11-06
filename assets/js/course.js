@@ -11,7 +11,7 @@ window.COURSE = [
     { n: 4, title: "Хранение и картинка: диски, видеокарта, порты", file: "lessons/04.html", pass: "81c35bab", secret: "HRL4fest+Gl3GfhhxBMJOT54kThUd6g37nWSN0Q=" },
   ]},
   { month: 2, title: "Сборка, BIOS и система", district: "Процессорск", lessons: [
-    { n: 5, title: "Как собирают ПК" },
+    { n: 5, title: "Как собирают ПК", file: "lessons/05.html", pass: "75fd66c2", buildPass: "6542e424", season: 2 },
     { n: 6, title: "Что бывает после кнопки: POST, BIOS, UEFI" },
     { n: 7, title: "Диски и разделы" },
     { n: 8, title: "Установка Windows 10 LTSC и драйверы" },

@@ -1,6 +1,6 @@
 // Офлайн-режим: сохраняем весь сайт на устройство при первом заходе.
 // При добавлении новых страниц допишите их в FILES и поднимите VERSION.
-const VERSION = "v7";
+const VERSION = "v8";
 const CACHE = "pamyatvil-" + VERSION;
 
 const FILES = [
@@ -28,6 +28,12 @@ const FILES = [
   "./assets/js/content/story02.js",
   "./assets/js/content/story03.js",
   "./assets/js/content/story04.js",
+  "./assets/js/content/lesson05.js",
+  "./assets/js/content/story05.js",
+  "./assets/js/games/arena.js",
+  "./assets/js/students.js",
+  "./assets/js/leaderboard.js",
+  "./assets/js/leaderboard-config.js",
   "./assets/gif/bit-angry.gif",
   "./assets/gif/bit-cool.gif",
   "./assets/gif/bit-dance.gif",
@@ -63,9 +69,11 @@ const FILES = [
   "./lessons/02.html",
   "./lessons/03.html",
   "./lessons/04.html",
+  "./lessons/05.html",
   "./teacher/02.html",
   "./teacher/03.html",
   "./teacher/04.html",
+  "./teacher/05.html",
   "./teacher/index.html",
   "./tools/password.html",
   "./tools/story-preview.html",
