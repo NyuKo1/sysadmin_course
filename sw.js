@@ -1,6 +1,6 @@
 // Офлайн-режим: сохраняем весь сайт на устройство при первом заходе.
 // При добавлении новых страниц допишите их в FILES и поднимите VERSION.
-const VERSION = "v8";
+const VERSION = "v9";
 const CACHE = "pamyatvil-" + VERSION;
 
 const FILES = [

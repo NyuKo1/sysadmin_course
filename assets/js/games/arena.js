@@ -664,7 +664,7 @@
         cfg.slots.forEach((sl) => {
           if (!sl.optional && !build[sl.id]) out.push({ sev: "err", key: "empty-" + sl.id, text: `Пустой слот: ${sl.label.toLowerCase()}`, why: `В сборке не хватает: ${sl.label.toLowerCase()}.`, slots: [sl.id] });
         });
-        if (L.budget && c.total > L.budget) out.push({ sev: "err", key: "budget", text: `Бюджет превышен на ${U.num(c.total - L.budget)} ₽`, why: `Заказчик дал ${U.num(L.budget)} ₽, а сборка стоит ${U.num(c.total)} ₽. Ищи, где переплата не даёт пользы.`, slots: [] });
+        if (L.budget && c.total > L.budget) out.push({ sev: "err", key: "budget", text: `Бюджет превышен на ${U.num(c.total - L.budget)} ₸`, why: `Заказчик дал ${U.num(L.budget)} ₸, а сборка стоит ${U.num(c.total)} ₸. Ищи, где переплата не даёт пользы.`, slots: [] });
         (cfg.checks ? cfg.checks(build, c) : []).forEach((p) => out.push(p));
         (L.need ? L.need(build, c) : []).forEach((p) => out.push(p));
         out.forEach((p) => { if (!p.key) p.key = p.text; });
@@ -682,7 +682,7 @@
           el.classList.toggle("bad", bad.has(sl.id));
           el.classList.toggle("warn", !bad.has(sl.id) && warn.has(sl.id));
           el.innerHTML = `<span class="ar-slot-l">${sl.label}${sl.optional ? " <i>(можно пусто)</i>" : ""}</span>
-            <span class="ar-slot-v">${p ? `${U.esc(p.name)} <i>${U.num(p.price)} ₽</i>` : "перетащи сюда"}</span>
+            <span class="ar-slot-v">${p ? `${U.esc(p.name)} <i>${U.num(p.price)} ₸</i>` : "перетащи сюда"}</span>
             ${p ? `<button class="ar-x" type="button" data-nodrag data-remove="${sl.id}" aria-label="Убрать ${U.esc(p.name)}">×</button>` : ""}`;
         });
       }
@@ -690,7 +690,7 @@
         const c = ctx();
         const m = root.querySelector('[data-m="money"]');
         const r = L.budget ? c.total / L.budget : 0;
-        m.querySelector("[data-mv]").textContent = `${U.num(c.total)} / ${U.num(L.budget)} ₽`;
+        m.querySelector("[data-mv]").textContent = `${U.num(c.total)} / ${U.num(L.budget)} ₸`;
         const em = m.querySelector("em");
         em.style.width = Math.min(100, r * 100) + "%";
         m.className = "ar-meter " + (r > 1 ? "bad" : r > 0.92 ? "warn" : "ok");
@@ -716,7 +716,7 @@
         box.innerHTML = parts.filter((p) => p.cat === tab).map((p) => {
           const inside = Object.values(build).includes(p);
           return `<button type="button" class="ar-item ar-card${inside ? " in" : ""}" data-part="${p.id}" aria-pressed="false">
-            <b>${U.esc(p.name)}</b><span class="ar-tags">${p.tags || ""}</span><span class="ar-price">${U.num(p.price)} ₽${inside ? " · в сборке" : ""}</span></button>`;
+            <b>${U.esc(p.name)}</b><span class="ar-tags">${p.tags || ""}</span><span class="ar-price">${U.num(p.price)} ₸${inside ? " · в сборке" : ""}</span></button>`;
         }).join("") || `<p class="muted">Пусто</p>`;
         root.querySelectorAll(".ar-tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.tab === tab)));
       }
