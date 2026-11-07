@@ -809,7 +809,7 @@
   function studentsOf(from) {
     const all = (Array.isArray(window.STUDENTS) ? window.STUDENTS : []).filter((x) => x && x.id);
     if (Array.isArray(from)) return from.map((id) => all.find((x) => x.id === id)).filter(Boolean);
-    return all;
+    return all.filter((x) => !x.teacher);
   }
   // Места в толпе: n героев равномерно по [x0, x1] в rows рядов зигзагом. Дальний ряд выше и мельче.
   function crowdShow(list, o, total) {
