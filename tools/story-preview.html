@@ -38,6 +38,7 @@
     </div>
     <div class="panel pv-art" id="pv-art"></div>
     <div class="panel pv-art" id="pv-choices"></div>
+    <div class="panel pv-art" id="pv-students"></div>
     <ol class="pv-list" id="pv-list"></ol>
     <div id="pv-scenes"></div>
   </main>
@@ -47,6 +48,8 @@
   <script src="../assets/js/content/story02.js"></script>
   <script src="../assets/js/content/story03.js"></script>
   <script src="../assets/js/content/story04.js"></script>
+  <script src="../assets/js/students.js"></script>
+  <script src="../assets/js/content/story05.js"></script>
   <script>
     (function () {
       const ids = Object.keys(window.STORIES || {});
@@ -60,6 +63,9 @@
 
       // Какие спрайты нужны сценкам и какие уже нарисованы.
       const need = new Set(["bit", "nibble", "mega", "glitch"]);
+      // Сезон 2: герои из cast сценок и спрайты учеников
+      ids.forEach((id) => Object.values(window.STORIES[id].cast || {}).forEach((c) => c && c.sprite && need.add(c.sprite)));
+      if (ids.some((id) => window.STORIES[id].beats.some((b) => b.roll || b.crowd))) (window.STUDENTS || []).forEach((st) => need.add(st.sprite || st.id));
       ids.forEach((id) => window.STORIES[id].beats.forEach((b) => {
         Object.values(b.show || {}).forEach((o) => o && o.sprite && need.add(o.sprite));
         let d = b.do || [];
@@ -89,6 +95,14 @@
       }
       showChoices();
       setInterval(showChoices, 800);
+
+      // Ученики финальной битвы урока 5 (assets/js/students.js): ник, цвет ярлыка, спрайт.
+      const studs = window.STUDENTS || [];
+      const escH = (t) => String(t == null ? "" : t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+      document.getElementById("pv-students").innerHTML = studs.length
+        ? `<b>Ученики в битве (${studs.length}):</b> ник и реплику меняют в assets/js/students.js<div class="pv-codes">` +
+          studs.map((st) => `<code style="background:${escH(st.color)};color:#111" title="${escH(st.line)}">${escH(st.id)} · ${escH(st.nick)} · ${escH(st.sprite)}${hd[st.sprite] ? "" : " (нет арта)"}</code>`).join("") + "</div>"
+        : "<b>window.STUDENTS не загружен.</b>";
       document.getElementById("pv-forget").addEventListener("click", () => {
         try { localStorage.removeItem("story-choices"); } catch (e) {}
         showChoices();

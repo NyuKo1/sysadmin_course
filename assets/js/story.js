@@ -33,6 +33,21 @@
 //             "*" (ответ есть) или null (ответа нет). Неподходящие кадры пропускаются целиком.
 //   «Назад» идёт по пройденному пути, через выбор тоже: вернулся к вопросу, можно ответить иначе.
 //
+// Сезон 2 (всё необязательно, старые сценки этих полей не используют и играют как раньше):
+//   title:  { kicker: "Сезон 2", text: "Осада Памятьвиля", sub: "..." }  титульная карточка поверх кадра.
+//           Без say подпись рассказчика не показывается.
+//   show:   у героя можно задать scale (размер вместо cast.scale), y (поднять над землёй, логические px:
+//           дальний ряд толпы), z (слой: 1 дальний, 2 ближний).
+//   do:     poof (герой разлетается на пиксели и исчезает), charge (рывок вперёд).
+//   fx:     boom:<герой|x> (взрыв пикселей), rumble (долгая тряска, для битвы с боссом).
+//   roll:   { from: "students", at: 60, back: [4, 56], fx: ["flash", "shake"], side: "alt" }
+//           перекличка: кадр превращается в серию кадров, по одному на ученика из window.STUDENTS
+//           (assets/js/students.js). Ученик выходит вперёд (ник над головой его цветом) и говорит свою
+//           реплику, прошлые уходят в толпу за спиной. «Назад» и «Пропустить» работают как обычно.
+//   crowd:  { from: "students", range: [6, 94], rows: 2, scale: 0.7, lift: 16 }  поставить всех сразу в два ряда.
+//           { from: "students", hide: true } убрать всех учеников со сцены.
+//   Ученики попадают в cast сами: имя = ник, цвет = color, спрайт = sprite.
+//
 // Сцена живёт в логических пикселях: ширина всегда 320, видимая высота 180 (1u = ширина / 320).
 // Фон, герои и тени масштабируются вместе. Пузыри реплик живут в настоящих пикселях,
 // чтобы текст оставался читаемым, а их место считается по положению говорящего.
@@ -63,7 +78,7 @@
     glitch: { from: 5, to: 8, eyes: "ry", fur: "v" },
   };
   // Линия земли (логические пиксели от верха кадра 0..180) для каждого фона.
-  const GROUND = { street: 168, tower: 164, servers: 166, ram: 168, warehouse: 166, monitor: 172, boot: 172 };
+  const GROUND = { street: 168, tower: 164, servers: 166, ram: 168, warehouse: 166, monitor: 172, boot: 172, lab: 168 };
 
   function store(k, v) {
     try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; }
@@ -120,12 +135,15 @@
   // Старый 16 px: глаза закрашиваем шерстью, нижнюю строку глаз делаем чёрточкой.
   function blinkFrame(name, a) {
     const key = Object.keys(EYES).find((k) => name.startsWith(k));
-    if (!key) return null;
     if (a.hd) {
-      if (name !== key) return null;
+      // свой кадр <имя>Blink той же высоты (так моргают и новые герои Сезона 2)
+      const own = art(name + "Blink");
+      if (own && own.hd && own.rows.length === a.rows.length) return own.rows;
+      if (!key || name !== key) return null;
       const b = art(key + "Blink");
       return b && b.hd && b.rows.length === a.rows.length ? b.rows : null;
     }
+    if (!key) return null;
     const e = EYES[key], rows = a.rows;
     const out = rows.map((r) => r.split(""));
     let lastY = -1;
@@ -244,6 +262,11 @@
     LIB.bits = LIB.twinkle; LIB.confetti = LIB.fanfare; LIB.smoke = LIB.hiss; LIB.zoom = LIB.whoosh;
     LIB.shake = LIB.thump; LIB.flash = LIB.zap; LIB.footsteps = LIB.steps; LIB.jump = LIB.boing;
     LIB.bounce = () => { tone(260, 0.16, "sine", 0.14, 700); tone(300, 0.14, "sine", 0.1, 700, 0.2); };
+    // Сезон 2: взрыв пикселей (poof, boom) и рёв босса
+    LIB.boom = () => { tone(90, 0.45, "sawtooth", 0.18, 30, 0, 600); hiss(0.5, "lowpass", 1800, 120, 0.3, 0, true); };
+    LIB.poof = () => { hiss(0.25, "bandpass", 2400, 400, 0.2, 0, true); tone(700, 0.18, "square", 0.05, 120, 0.02, 2500); };
+    LIB.rumble = () => { tone(55, 1.1, "sawtooth", 0.16, 40, 0, 300); hiss(1, "lowpass", 400, 90, 0.25); };
+    LIB.charge = LIB.whoosh;
     // Голос при печати: одна «буковка» звука на пару символов.
     const VOICE = {
       bit: () => tone(500 + Math.random() * 60, 0.035, "square", 0.035, 0, 0, 2600),
@@ -252,6 +275,13 @@
       glitch: () => { tone(200 + Math.random() * 700, 0.03, "square", 0.03); if (Math.random() < 0.3) hiss(0.03, "bandpass", 2000, 0, 0.06, 0, true); },
       narrator: () => tone(330 + Math.random() * 20, 0.04, "sine", 0.03),
       other: () => tone(420 + Math.random() * 40, 0.04, "triangle", 0.035),
+      // Сезон 2: Матрёна Плата (ровный низкий), Радик (быстрый резкий), Клава (высокий щелчок),
+      // Глюк.exe (низкий хрип), ученики (весёлый треугольник)
+      plata: () => tone(240 + Math.random() * 25, 0.05, "triangle", 0.05, 0, 0, 1600),
+      radik: () => tone(620 + Math.random() * 120, 0.03, "sawtooth", 0.03, 0, 0, 2200),
+      klava: () => tone(1150 + Math.random() * 150, 0.02, "square", 0.025, 0, 0, 3500),
+      boss: () => { tone(90 + Math.random() * 60, 0.06, "sawtooth", 0.05, 0, 0, 700); if (Math.random() < 0.35) hiss(0.04, "bandpass", 900, 0, 0.07, 0, true); },
+      kid: () => tone(600 + Math.random() * 300, 0.035, "triangle", 0.04),
     };
     return {
       unlock,
@@ -382,12 +412,58 @@
     return `<path d="M${x1} ${y1} Q${(x1 + x2) / 2} ${Math.max(y1, y2) + sag} ${x2} ${y2}" stroke="${color}" stroke-width="1" fill="none"/>`;
   }
 
+  // Сезон 2: захваченная улица. Флаги Глюка, битые пиксели в окнах, фиолетовое зарево.
+  function streetSiege(gy) {
+    const rand = rng(77);
+    let s = R(0, TOP, W, gy - TOP, pat("glow", "#7a2bd1"), 'class="st-glow" opacity=".55"');
+    [[20, 70], [104, 58], [186, 62], [282, 66]].forEach(([x, h]) => {
+      s += R(x, gy - h - 26, 2, 26, "#2c3633") + R(x + 2, gy - h - 26, 18, 11, "#6c2bd1") + P(`${x + 20},${gy - h - 26} ${x + 25},${gy - h - 20} ${x + 20},${gy - h - 15}`, "#6c2bd1");
+      s += R(x + 8, gy - h - 23, 4, 4, "#ffe066") + R(x + 9, gy - h - 22, 2, 2, "#b8323f");
+    });
+    for (let i = 0; i < 26; i++) {
+      s += R(fl(rand() * W), gy - 10 - fl(rand() * 90), 3, 3, pick(rand, ["#ff4d4d", "#3ddc84", "#4d7cff", "#ff3df0"]), anim(rand, "st-blink", 0.5, 1.5));
+    }
+    return s;
+  }
+  // Сезон 2: руины после битвы. Обломки стен, пустые окна, дым. Ни одного огонька.
+  function streetRuins(gy) {
+    const rand = rng(99);
+    let s = bitClouds(rand, 3, "#3a3f46");
+    [[4, 44, 50], [52, 34, 34], [90, 46, 60], [140, 30, 24], [174, 52, 70], [230, 36, 30], [270, 46, 54]].forEach(([x, w, h], i) => {
+      const pts = [[x, gy]]; let px = x;
+      while (px < x + w) { pts.push([px, gy - h + fl(rand() * h * 0.5)]); px += 4 + fl(rand() * 8); }
+      pts.push([x + w, gy - fl(h * 0.3 + rand() * h * 0.4)], [x + w, gy]);
+      s += P(pts.map((p) => p.join(",")).join(" "), i % 2 ? "#1c2420" : "#1d2630");
+      for (let wy = gy - h + 14; wy < gy - 10; wy += 12) for (let wx = x + 4; wx < x + w - 8; wx += 9) if (rand() < 0.6) s += R(wx, wy, 5, 7, "#07090c");
+    });
+    // мачта Wi-Fi согнута
+    s += R(199, gy - 40, 2, 40, "#2c3633") + `<path d="M200 ${gy - 40} L214 ${gy - 58}" stroke="#2c3633" stroke-width="2"/>` + R(214, gy - 61, 4, 3, "#3a2a2a");
+    s += R(0, gy, W, 7, "#1d2725") + R(0, gy, W, 1, "#33403d") + R(0, gy + 7, W, 2, "#2b3633") + R(0, gy + 9, W, H - gy - 9, "#0a0f0e");
+    s += traces(rand, gy + 9, H, "#2a2a26", "#3a3a32");
+    // кучи обломков и дым
+    for (let i = 0; i < 9; i++) {
+      const x = fl(rand() * W), w = 10 + fl(rand() * 22);
+      s += P(`${x},${gy + 2} ${x + w / 2},${gy - 6 - fl(rand() * 6)} ${x + w},${gy + 2}`, pick(rand, ["#2a302e", "#323836", "#262b2a"]));
+      s += R(x + 3, gy - 2, 3, 2, "#3e4644") + R(x + w - 7, gy - 1, 4, 2, "#1a1f1e");
+    }
+    for (let i = 0; i < 5; i++) {
+      const x = 30 + i * 62 + fl(rand() * 20);
+      s += C(x, gy - 70, 12, "#5a6064", 'opacity=".18"') + C(x + 8, gy - 92, 16, "#5a6064", 'opacity=".12"');
+    }
+    s += lamp(30, gy) + R(214, gy - 46, 2, 46, "#2c3633");
+    return s;
+  }
+
   const BG = {
     // Улица Памятьвиля ночью. Варианты: translator (на площади Переводчик), broken (он сломан), dark (все спят)
+    // Сезон 2: siege (город захвачен армией Глюка), ruins (после битвы: пусто, всё строить с нуля)
     street(v) {
-      const rand = rng(7), gy = 150;
-      let s = sky(rand, ["#04060d", "#060914", "#080d1c", "#0b1124", "#0e162c", "#121b34"], -60, 120, 110);
-      s += moon(266, 22, 9) + bitClouds(rand, 4, "#2b6e4c");
+      const rand = rng(7), gy = 150, siege = v === "siege", ruins = v === "ruins";
+      let s = sky(rand, siege ? ["#0a0414", "#10061d", "#160828", "#1d0b33", "#240d3d", "#2c1046"]
+        : ruins ? ["#0b0d12", "#11141b", "#171b23", "#1e222b", "#262a31", "#2f3237"]
+        : ["#04060d", "#060914", "#080d1c", "#0b1124", "#0e162c", "#121b34"], -60, 120, 110);
+      if (ruins) return s + streetRuins(gy);
+      s += moon(266, 22, 9) + bitClouds(rand, 4, siege ? "#7a3bb8" : "#2b6e4c");
       for (let x = 0; x < W;) {
         const w = 10 + fl(rand() * 18), h = 60 + fl(rand() * 44);
         s += R(x, gy - h, w, h, "#0a0f1a");
@@ -421,6 +497,57 @@
       for (let x = 6; x < W; x += 14) s += R(x, gy + 1, 1, 6, "#151d1b");
       s += R(0, gy + 7, W, 2, "#2b3633") + R(0, gy + 9, W, H - gy - 9, "#0a0f0e") + traces(rand, gy + 9, H, "#3d2f1c", "#7a5a30");
       s += lamp(30, gy) + lamp(214, gy) + lamp(300, gy);
+      if (siege) s += streetSiege(gy);
+      return s;
+    },
+
+    // Сезон 2: мастерская Клавы. Верстак, открытый корпус ПК, монитор. Варианты: on (компьютер работает)
+    lab(v) {
+      const rand = rng(41), on = v === "on", gy = 150;
+      let s = R(0, TOP, W, H - TOP, "#10141c");
+      for (let y = TOP + 2; y < gy; y += 8) {
+        const off = ((y - TOP) / 8) % 2 ? 0 : -8;
+        for (let x = off; x < W; x += 16) s += R(x, y, 15, 7, pick(rand, ["#1a1f2a", "#1c2230", "#171c26", "#1f2532"]));
+      }
+      // окно: снаружи фиолетовое зарево захваченного города (или спокойная ночь, когда всё работает)
+      s += R(118, 18, 64, 44, "#0a0d12") + R(120, 20, 60, 40, on ? "#0e1a2e" : "#2a0f3d") + R(149, 20, 2, 40, "#0a0d12") + R(120, 39, 60, 2, "#0a0d12");
+      if (!on) s += R(120, 20, 60, 40, pat("glow", "#9b3bd6"), 'class="st-glow"') + R(126, 48, 4, 4, "#ff4d4d", anim(rand, "st-blink", 0.6, 0.6)) + R(162, 30, 4, 4, "#3ddc84", anim(rand, "st-blink", 0.7, 0.6));
+      else s += moon(166, 32, 5);
+      // доска с инструментами
+      s += R(10, 30, 92, 62, "#4a3a2a") + R(10, 30, 92, 2, "#6a543c");
+      for (let y = 36; y < 90; y += 6) for (let x = 15; x < 100; x += 6) s += R(x, y, 1, 1, "#2a2018");
+      s += R(20, 40, 3, 30, "#c9d1d9") + R(17, 38, 9, 4, "#c9d1d9") + R(19, 70, 5, 6, "#c9d1d9");             // ключ
+      s += R(36, 42, 3, 18, "#c9d1d9") + R(34, 60, 7, 14, "#ffcf3a") + R(48, 42, 3, 16, "#c9d1d9") + R(46, 58, 7, 14, "#ff6b6b"); // отвёртки
+      s += P("64,40 70,40 74,64 60,64", "#8d99a1") + R(60, 64, 4, 16, "#3a7bd5") + R(70, 64, 4, 16, "#3a7bd5");        // пассатижи
+      s += C(88, 52, 9, "none", 'stroke="#ffcf3a" stroke-width="2"') + C(88, 52, 5, "none", 'stroke="#2a2f3a" stroke-width="2"'); // моток кабеля
+      // полка с коробками
+      s += R(212, 24, 100, 3, "#6a543c");
+      [["RAM", 216, "#3a7bd5"], ["SSD", 246, "#2a9d6a"], ["PSU", 276, "#c2410c"]].forEach(([t, x, c]) => {
+        s += R(x, 8, 26, 16, c) + R(x, 8, 26, 2, "#ffffff", 'opacity=".25"') + T(x + 4, 20, t, 8, "#0a0d12", 'font-weight="700"');
+      });
+      // верстак
+      s += R(84, 112, 236, 6, "#9a6a3a") + R(84, 112, 236, 1, "#c48a52") + R(84, 118, 236, 3, "#5a3a1c");
+      s += R(92, 121, 6, gy - 121, "#4a2f16") + R(306, 121, 6, gy - 121, "#4a2f16");
+      // корпус ПК на боку, крышка снята
+      s += R(160, 62, 56, 50, "#2a2f3a") + R(162, 64, 52, 46, "#0c1016") + R(160, 62, 56, 2, "#4a5262");
+      s += R(166, 68, 34, 38, "#1f6e43") + R(166, 68, 34, 1, "#3aa868");                                    // плата
+      s += R(176, 74, 12, 12, "#c9d1d9") + C(182, 80, 5, "#2a2f3a") + C(182, 80, 5, "none", 'stroke="#8d99a1" stroke-width="1"'); // кулер
+      s += `<g${on ? ' class="st-spin st-fast"' : ""}>` + P("182,80 179,76 185,76", "#8d99a1") + P("182,80 186,83 182,85", "#8d99a1") + P("182,80 178,83 177,79", "#8d99a1") + "</g>";
+      s += R(192, 72, 2, 16, on ? "#5cf29a" : "#3a7bd5") + R(196, 72, 2, 16, on ? "#5cf29a" : "#3a7bd5");     // планки памяти
+      s += R(168, 92, 30, 4, on ? "#ff4d6d" : "#7a2030");                                                   // видеокарта
+      s += R(202, 92, 10, 14, "#3a3f4a") + R(203, 94, 8, 1, "#5a6070");                                     // блок питания
+      s += `<path d="M207 92 Q204 80 196 70" stroke="#ffcf3a" stroke-width="1" fill="none"/>`;
+      // монитор
+      s += R(232, 66, 64, 42, "#0a0d12") + R(234, 68, 60, 36, on ? "#04140a" : "#05070a") + R(260, 108, 12, 4, "#2a2f3a") + R(252, 111, 28, 2, "#3a3f4a");
+      if (on) s += T(238, 80, "POST ... OK", 7, "#5cf29a") + T(238, 92, "Памятьвиль ОНЛАЙН", 6, "#5cf29a", 'class="st-blink-slow"');
+      else s += T(238, 80, "НЕТ СИГНАЛА", 7, "#ff6b6b", 'class="st-blink-slow"') + R(238, 90, 4, 2, "#c9d1d9", 'class="st-blink"');
+      // настольная лампа
+      s += R(120, 108, 14, 4, "#2a2f3a") + `<path d="M126 108 L118 88 L132 78" stroke="#3a3f4a" stroke-width="2" fill="none"/>` + P("128,72 142,76 136,86", "#3a3f4a");
+      s += P("138,82 150,112 112,112", "#ffe9a8", 'opacity=".08"');
+      // пол
+      s += R(0, gy, W, H - gy, "#161b24") + R(0, gy, W, 1, "#2a3240");
+      for (let x = 0; x < W; x += 24) s += R(x, gy + 1, 1, H - gy, "#11151d");
+      s += `<ellipse cx="60" cy="${gy + 12}" rx="22" ry="3" fill="none" stroke="#2a2f3a" stroke-width="1.5"/>`;
       return s;
     },
 
@@ -673,12 +800,68 @@
   }
 
   // ---------- плеер ----------
-  const ONESHOT = ["jump", "shake", "bounce", "float", "spin", "pop"];
+  const ONESHOT = ["jump", "shake", "bounce", "float", "spin", "pop", "charge"];
   const SR = "position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;";
+
+  // ---------- Сезон 2: ученики, перекличка (roll) и толпа (crowd) ----------
+  // Кадры roll/crowd раскрываются в обычные кадры до начала показа, поэтому «Назад», «Пропустить»,
+  // метки и выборы работают с ними как с любыми другими. Сценки без roll/crowd не меняются вообще.
+  function studentsOf(from) {
+    const all = (Array.isArray(window.STUDENTS) ? window.STUDENTS : []).filter((x) => x && x.id);
+    if (Array.isArray(from)) return from.map((id) => all.find((x) => x.id === id)).filter(Boolean);
+    return all;
+  }
+  // Места в толпе: n героев равномерно по [x0, x1] в rows рядов зигзагом. Дальний ряд выше и мельче.
+  function crowdShow(list, o, total) {
+    const n = Math.max(total || list.length, 1), rows = Math.max(1, o.rows || 2);
+    const [x0, x1] = o.range || [6, 94], sc = o.scale || 0.7, lift = o.lift != null ? o.lift : 16;
+    const show = {};
+    list.forEach((s, k) => {
+      if (o.hide) { show[s.id] = { hide: true }; return; }
+      const row = k % rows, far = rows - 1 - row;
+      show[s.id] = { x: +(x0 + ((k + 0.5) * (x1 - x0)) / n).toFixed(2), y: rows > 1 ? +((lift * far) / (rows - 1)).toFixed(1) : 0,
+        scale: +(sc * (far ? 0.88 : 1)).toFixed(3), z: row + 1, hide: false };
+    });
+    return show;
+  }
+  function expandBeats(list, cast) {
+    if (!list.some((b) => b && (b.roll || b.crowd))) return list;
+    studentsOf().forEach((x) => {
+      if (!cast[x.id]) cast[x.id] = { name: x.nick || x.id, sprite: x.sprite || x.id, color: x.color || "#e0a458", scale: 1.15, voice: "kid" };
+    });
+    const out = [];
+    list.forEach((b) => {
+      if (b.crowd) {
+        const o = typeof b.crowd === "object" ? b.crowd : {};
+        const nb = Object.assign({}, b, { show: Object.assign(crowdShow(studentsOf(o.from), o), b.show || {}) });
+        delete nb.crowd;
+        out.push(nb);
+        return;
+      }
+      if (!b.roll) { out.push(b); return; }
+      const o = typeof b.roll === "object" ? b.roll : {};
+      const ss = studentsOf(o.from), fxs = [].concat(o.fx || []), at = o.at != null ? o.at : 60;
+      if (!ss.length) { const nb = Object.assign({}, b); delete nb.roll; out.push(nb); return; }
+      ss.forEach((x, i) => {
+        const nb = i === 0 ? Object.assign({}, b) : b.if ? { if: b.if } : {};
+        delete nb.roll;
+        const side = o.side && o.side !== "alt" ? o.side : i % 2 ? "right" : "left";
+        let acts = i === 0 && b.do ? (typeof b.do === "string" ? b.do.split(";") : b.do.slice()) : [];
+        acts = acts.concat([x.id + " enter " + side + " " + at, x.id + " charge"]);
+        nb.do = acts;
+        if (i > 0) nb.show = crowdShow(ss.slice(0, i), { range: o.back || [4, 56], rows: 2, scale: o.backScale || 0.6, lift: o.lift != null ? o.lift : 14 }, ss.length - 1);
+        nb.who = x.id;
+        nb.say = x.line || "В атаку!";
+        if (fxs.length) nb.fx = fxs[i % fxs.length];
+        out.push(nb);
+      });
+    });
+    return out;
+  }
 
   function Player(root, id, story) {
     const cast = Object.assign({}, CAST, story.cast || {});
-    const beats = story.beats || [];
+    const beats = expandBeats(story.beats || [], cast);
     const last = beats.length - 1;
     root.classList.add("story-on");
     root.innerHTML = `
@@ -845,6 +1028,7 @@
         else if (verb === "face") { a.face = arg === "left" ? -1 : 1; }
         else if (verb === "as" || verb === "emo") { a.sprite = arg; st.shots.push([aid, "pop"]); }
         else if (verb === "hide") { a.visible = false; a.exitTo = null; }
+        else if (verb === "poof") { a.visible = false; a.exitTo = null; a.poof = true; st.fx.push(["boom", aid]); }
         else if (verb === "show") { a.visible = true; }
         else if (ONESHOT.includes(verb)) st.shots.push([aid, verb]);
       });
@@ -893,11 +1077,12 @@
       for (const aid in st.actors) {
         const a = st.actors[aid], v = viewFor(aid), el = v.el;
         const res = resolve(aid, a.sprite, cast);
-        const key = res.name + "|" + res.filter;
+        // a.scale (Сезон 2, из show) меняет размер только этого героя в этой сценке
+        const scale = Number(a.scale) || (cast[aid] && cast[aid].scale) || 1.5;
+        const key = res.name + "|" + res.filter + (a.scale ? "|" + scale : "");
         if (v.key !== key) {
           v.key = key;
           const A = art(res.name);
-          const scale = (cast[aid] && cast[aid].scale) || 1.5;
           // ширина всегда 32 логических пикселя на масштаб; высота по арту (HD до 40 px, старый 16 px x2)
           v.wu = 32 * scale;
           v.hu = (A ? A.rows.length * A.k : 28) * scale;
@@ -914,7 +1099,11 @@
         el.style.setProperty("--c", (cast[aid] && cast[aid].color) || "#e0a458");
         v.face.style.transform = "scaleX(" + (a.face < 0 ? -1 : 1) + ")";
         v.idle.className = "st-a-idle" + (a.idle ? " idle-" + a.idle : "");
-        el.style.setProperty("--g", String(H - g));
+        el.style.setProperty("--g", String(H - g + (Number(a.y) || 0)));
+        if (a.z != null || el.classList.contains("st-z")) {
+          el.classList.toggle("st-z", a.z != null);
+          el.style.setProperty("--z", String(a.z != null ? a.z : 2));
+        }
         const was = !el.hidden;
         if (animate && a.enterFrom != null) {
           el.classList.add("no-tr");
@@ -928,13 +1117,17 @@
           if (animate && a.walk && was) el.classList.add("walking");
           el.hidden = false;
           el.style.left = a.x + "%";
+        } else if (animate && a.poof && was) {
+          // Сезон 2: разлетается на пиксели
+          el.classList.add("st-poofing");
+          setTimeout(() => { el.classList.remove("st-poofing"); if (myGen === gen && !st.actors[aid].visible) el.hidden = true; }, 700);
         } else if (animate && a.exitTo != null && was) {
           el.classList.add("walking");
           el.style.left = a.exitTo + "%";
           setTimeout(() => { if (myGen === gen && !st.actors[aid].visible) el.hidden = true; }, 900);
         } else el.hidden = true;
         if (!animate) { el.classList.add("no-tr"); el.classList.remove("walking"); void el.offsetWidth; el.classList.remove("no-tr"); }
-        a.enterFrom = a.exitTo = null; a.walk = false;
+        a.enterFrom = a.exitTo = null; a.walk = false; a.poof = false;
       }
 
       if (animate) {
@@ -972,6 +1165,7 @@
     function effect(name, target) {
       const calm = reduced();
       if (name === "shake") { if (!calm) restart(stage, "fx-shake", 600); }
+      else if (name === "rumble") { if (!calm) restart(stage, "fx-rumble", 1400); }
       else if (name === "flash") restart(flashEl, calm ? "on-soft" : "on", 900);
       else if (name === "glitch") restart(stage, calm ? "fx-tint" : "fx-glitch", 900);
       else if (calm) return;
@@ -994,6 +1188,25 @@
         p.style.setProperty("--dx", (Math.random() * 40 - 20).toFixed(0) + "px");
         return p;
       }, 46, 4000);
+      else if (name === "boom") {
+        // Сезон 2: взрыв цветных пикселей из героя (или из точки x)
+        const x = xOf(target), a = st.actors[target], v = views[target];
+        const u = (stage.clientWidth || W) / W;
+        const midY = ((a && v ? H - ground() + (Number(a.y) || 0) + v.hu * 0.45 : 60) * u).toFixed(1);
+        particles((i) => {
+          const p = document.createElement("span");
+          p.className = "st-p st-boomp";
+          p.style.left = x + "%";
+          p.style.top = "auto";
+          p.style.bottom = midY + "px";
+          p.style.background = ["#ff4d4d", "#3ddc84", "#4d7cff", "#ff3df0", "#ffe066", "#b25cff"][i % 6];
+          const ang = Math.random() * Math.PI * 2, d = 6 + Math.random() * 16;
+          p.style.setProperty("--dx", (Math.cos(ang) * d).toFixed(1) + "cqw");
+          p.style.setProperty("--dy", (Math.sin(ang) * d - 4).toFixed(1) + "cqw");
+          p.style.animationDelay = (Math.random() * 0.12).toFixed(2) + "s";
+          return p;
+        }, 22, 1400);
+      }
       else if (name === "smoke") {
         const x = xOf(target);
         particles(() => {
@@ -1180,7 +1393,7 @@
       const tagH = (v.tag.offsetHeight || 20) + 7;            // ярлык с именем над головой
       // к ученику (to-reader) герой крупнее и на шаг ближе: см. .st-actor.to-reader в CSS
       const near = v.el.classList.contains("to-reader");
-      let headTop = SH - (H - ground()) * u + (near ? 8 * u : 0) - headH * (near ? 1.3 : 1.07) - tagH;
+      let headTop = SH - (H - ground() + (Number(a.y) || 0)) * u + (near ? 8 * u : 0) - headH * (near ? 1.3 : 1.07) - tagH;
       if (st.zoom != null) {
         const ox = (xOf(st.zoom) / 100) * SW, oy = SH * 0.75, k = reduced() ? 1.2 : 1.3;
         hx = ox + (hx - ox) * k; headTop = oy + (headTop - oy) * k;
@@ -1233,6 +1446,8 @@
         else if (verb === "jump" || verb === "bounce") list.push(verb);
         else if (verb === "as" || verb === "emo") list.push("pop");
         else if (verb === "shake" && !list.includes("thump")) list.push("thump");
+        else if (verb === "poof") list.push("poof");
+        else if (verb === "charge") list.push("charge");
       });
       // не больше 3 разных звуков за кадр, с небольшим разносом
       [...new Set(list)].slice(0, 3).forEach((n, k) => setTimeout(() => SFX.play(n), 40 + k * 140));
@@ -1247,6 +1462,7 @@
       loudNow = !!loud;
       if (loud) beatSounds(b);
       speech(b, !animate);
+      showTitle(b, animate);
       const need = needsPick(i);
       // без веток это ровно «i + 1 / всего кадров», как раньше
       countEl.textContent = path.length + " / " + (path.length + remaining(i));
@@ -1271,8 +1487,29 @@
       // если шрифт ещё грузится или менялась вёрстка, пересчитаем место пузыря
       requestAnimationFrame(place);
     }
+    // ---------- Сезон 2: титульная карточка (поле title) ----------
+    let titleEl = null;
+    function showTitle(b, animate) {
+      if (!b.title && !titleEl) return;
+      if (!titleEl) {
+        titleEl = document.createElement("div");
+        titleEl.className = "st-titlecard";
+        titleEl.setAttribute("aria-hidden", "true");
+        stage.insertBefore(titleEl, stage.querySelector(".st-count"));
+      }
+      const t = b.title;
+      if (!t) { titleEl.hidden = true; return; }
+      const o = typeof t === "object" ? t : { text: String(t) };
+      titleEl.innerHTML = (o.kicker ? `<span class="st-tc-kicker">${esc(o.kicker)}</span>` : "") +
+        `<span class="st-tc-text">${esc(o.text || "")}</span>` + (o.sub ? `<span class="st-tc-sub">${esc(o.sub)}</span>` : "");
+      titleEl.hidden = false;
+      titleEl.classList.remove("st-tc-in");
+      if (animate) { void titleEl.offsetWidth; titleEl.classList.add("st-tc-in"); }
+      if (!b.say) { capEl.hidden = true; live.textContent = [o.kicker, o.text, o.sub].filter(Boolean).join(". "); }
+    }
     function reset() {
       gen++;
+      if (titleEl) titleEl.hidden = true;
       clearTimeout(typing); typing = null;
       picking = false;
       st = fresh(); bgSpec = null;

@@ -30,6 +30,8 @@
 
   function Game(el) {
     const id = el.dataset.config;
+    // Игры сезона 2 живут в assets/js/games/arena.js и монтируются там.
+    if (window.Arena && window.Arena.data && window.Arena.data[id]) return;
     const cfg = MiniGame.data[id];
     if (!cfg) { el.innerHTML = `<p class="muted">Игра «${U.esc(id)}» не найдена.</p>`; return; }
     const type = MiniGame.types[cfg.type];

@@ -71,6 +71,45 @@
       </details>`;
     gate.querySelector("details").append(passForm(info, () => { open = max; apply(); }));
 
+    // Опционально: блок с data-gate="build" (настоящая сборка ПК на уроке) не имеет игры.
+    // Следующая часть открывается «кодом сборки» от учителя (отпечаток info.buildPass).
+    // Пароль урока и пароль учителя в этом же поле открывают весь урок.
+    // Без data-gate="build" на странице карточка выглядит и работает как раньше.
+    const buildSecs = stages.filter((el) => el.dataset.gate === "build");
+    const plain = buildSecs.length ? { h2: gate.querySelector("h2").textContent, p: gate.querySelector("p.muted").textContent } : null;
+    let buildForm = null;
+    if (buildSecs.length) {
+      buildForm = document.createElement("form");
+      buildForm.className = "passform build-pass";
+      buildForm.innerHTML = `
+        <input type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="код сборки" aria-label="Код сборки">
+        <button class="btn" type="submit">Проверить</button>
+        <p class="err" aria-live="polite"></p>`;
+      buildForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = buildForm.querySelector("input");
+        const v = input.value;
+        if (info && info.buildPass && v.trim() && fingerprint(v) === info.buildPass) {
+          const k = buildStageOpen();
+          if (k !== null && k + 1 > open) { open = Math.min(max, k + 1); store("stage-" + n, String(open)); }
+          input.value = "";
+          apply();
+          const next = document.querySelector(`[data-stage="${open}"]`);
+          if (next) next.scrollIntoView({ behavior: "smooth", block: "start" });
+          return;
+        }
+        if (checkPass(v, info)) { open = max; apply(); return; }
+        buildForm.querySelector(".err").textContent = v.trim() ? "Код не подходит. Его скажет учитель, когда ПК пройдёт POST" : "Введи код сборки";
+        buildForm.classList.add("shake");
+        setTimeout(() => buildForm.classList.remove("shake"), 350);
+      });
+    }
+    // Номер открытого этапа сборки, после которого стоит карточка, или null
+    function buildStageOpen() {
+      const s = buildSecs.find((el) => Number(el.dataset.stage) === open);
+      return s ? open : null;
+    }
+
     function apply() {
       stages.forEach((el) => el.classList.toggle("unlocked", Number(el.dataset.stage) <= open));
       document.querySelectorAll(".steps a[href^='#']").forEach((a) => {
@@ -78,6 +117,16 @@
         a.classList.toggle("locked", !!(t && t.dataset.stage && Number(t.dataset.stage) > open));
       });
       if (open >= max) { gate.remove(); return; }
+      if (buildForm) {
+        const isBuild = buildStageOpen() !== null;
+        gate.classList.toggle("gate-build", isBuild);
+        gate.querySelector("h2").textContent = isBuild ? "Нужен код сборки" : plain.h2;
+        gate.querySelector("p.muted").textContent = isBuild
+          ? "Соберите компьютер командой. Когда он пройдёт POST и покажет BIOS, учитель скажет код сборки. Введи его здесь, и откроется финал урока."
+          : plain.p;
+        if (isBuild && !buildForm.isConnected) gate.querySelector("details").before(buildForm);
+        if (!isBuild && buildForm.isConnected) buildForm.remove();
+      }
       const shown = [...main.querySelectorAll(":scope > section.block:not(.gate)")]
         .filter((el) => !el.dataset.stage || Number(el.dataset.stage) <= open);
       shown[shown.length - 1].after(gate);
@@ -158,6 +207,43 @@
     });
   }
 
-  document.addEventListener("DOMContentLoaded", () => { mountStages(); mountTeacherLock(); mountHomework(); });
+  // ---------- чек-лист с галочками (опционально, урок 5: сборка ПК) ----------
+  // <div data-checklist="имя"> с <input type="checkbox"> внутри. Галочки хранятся в этом браузере.
+  // [data-checklist-count] показывает «сделано из всех», [data-checklist-reset] снимает галочки,
+  // [data-print] печатает только свой блок (id блока в значении атрибута).
+  function mountChecklists() {
+    document.querySelectorAll("[data-checklist]").forEach((box) => {
+      const key = "check-" + box.dataset.checklist;
+      const boxes = [...box.querySelectorAll("input[type=checkbox]")];
+      let saved = {};
+      try { saved = JSON.parse(store(key) || "{}") || {}; } catch (e) { saved = {}; }
+      const count = () => {
+        const done = boxes.filter((b) => b.checked).length;
+        box.querySelectorAll("[data-checklist-count]").forEach((o) => (o.textContent = done + " из " + boxes.length));
+        box.classList.toggle("all-done", done === boxes.length);
+      };
+      boxes.forEach((b, i) => {
+        const id = b.value || String(i);
+        b.checked = !!saved[id];
+        b.addEventListener("change", () => { saved[id] = b.checked; store(key, JSON.stringify(saved)); count(); });
+      });
+      box.querySelectorAll("[data-checklist-reset]").forEach((btn) => btn.addEventListener("click", () => {
+        boxes.forEach((b) => (b.checked = false));
+        saved = {};
+        store(key, "{}");
+        count();
+      }));
+      count();
+    });
+    document.querySelectorAll("[data-print]").forEach((btn) => btn.addEventListener("click", () => {
+      const root = document.documentElement;
+      root.dataset.printOnly = btn.dataset.print;
+      const done = () => { delete root.dataset.printOnly; window.removeEventListener("afterprint", done); };
+      window.addEventListener("afterprint", done);
+      window.print();
+    }));
+  }
+
+  document.addEventListener("DOMContentLoaded", () => { mountStages(); mountTeacherLock(); mountHomework(); mountChecklists(); });
   window.addEventListener("online", mountHomework);
 })();
