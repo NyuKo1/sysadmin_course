@@ -12,7 +12,7 @@ window.COURSE = [
   ]},
   { month: 2, title: "Сборка, BIOS и система", district: "Процессорск", lessons: [
     { n: 5, title: "Как собирают ПК", file: "lessons/05.html", pass: "75fd66c2", buildPass: "6542e424", season: 2 },
-    { n: 6, title: "Что бывает после кнопки: POST, BIOS, UEFI" },
+    { n: 6, title: "Что бывает после кнопки: POST, BIOS, UEFI", file: "lessons/06.html", pass: "b6db0a31", buildPass: "3df48411", season: 2 },
     { n: 7, title: "Диски и разделы" },
     { n: 8, title: "Установка Windows 10 LTSC и драйверы" },
   ]},

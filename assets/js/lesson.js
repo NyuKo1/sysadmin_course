@@ -77,12 +77,14 @@
     // Без data-gate="build" на странице карточка выглядит и работает как раньше.
     const buildSecs = stages.filter((el) => el.dataset.gate === "build");
     const plain = buildSecs.length ? { h2: gate.querySelector("h2").textContent, p: gate.querySelector("p.muted").textContent } : null;
+    // Свои тексты карточки (урок 6: «код BIOS»): data-gate-title, data-gate-text, data-gate-placeholder, data-gate-err
+    const gd = buildSecs.length ? buildSecs[0].dataset : {};
     let buildForm = null;
     if (buildSecs.length) {
       buildForm = document.createElement("form");
       buildForm.className = "passform build-pass";
       buildForm.innerHTML = `
-        <input type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="код сборки" aria-label="Код сборки">
+        <input type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="${gd.gatePlaceholder || "код сборки"}" aria-label="${gd.gatePlaceholder || "Код сборки"}">
         <button class="btn" type="submit">Проверить</button>
         <p class="err" aria-live="polite"></p>`;
       buildForm.addEventListener("submit", (e) => {
@@ -99,7 +101,7 @@
           return;
         }
         if (checkPass(v, info)) { open = max; apply(); return; }
-        buildForm.querySelector(".err").textContent = v.trim() ? "Код не подходит. Его скажет учитель, когда ПК пройдёт POST" : "Введи код сборки";
+        buildForm.querySelector(".err").textContent = v.trim() ? (gd.gateErr || "Код не подходит. Его скажет учитель, когда ПК пройдёт POST") : "Введи " + (gd.gatePlaceholder || "код сборки");
         buildForm.classList.add("shake");
         setTimeout(() => buildForm.classList.remove("shake"), 350);
       });
@@ -120,9 +122,9 @@
       if (buildForm) {
         const isBuild = buildStageOpen() !== null;
         gate.classList.toggle("gate-build", isBuild);
-        gate.querySelector("h2").textContent = isBuild ? "Нужен код сборки" : plain.h2;
+        gate.querySelector("h2").textContent = isBuild ? (gd.gateTitle || "Нужен код сборки") : plain.h2;
         gate.querySelector("p.muted").textContent = isBuild
-          ? "Соберите компьютер командой. Когда он пройдёт POST и покажет BIOS, учитель скажет код сборки. Введи его здесь, и откроется финал урока."
+          ? (gd.gateText || "Соберите компьютер командой. Когда он пройдёт POST и покажет BIOS, учитель скажет код сборки. Введи его здесь, и откроется финал урока.")
           : plain.p;
         if (isBuild && !buildForm.isConnected) gate.querySelector("details").before(buildForm);
         if (!isBuild && buildForm.isConnected) buildForm.remove();

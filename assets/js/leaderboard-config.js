@@ -11,4 +11,10 @@ window.LEADERBOARD_GAMES = {
     { id: "l05-build", title: "Сборка" },
     { id: "l05-fix", title: "Диагностика" },
   ],
+  l06: [
+    { id: "l06-boot", title: "Загрузка" },
+    { id: "l06-guard", title: "Secure Boot" },
+    { id: "l06-uefi", title: "UEFI" },
+    { id: "l06-boss", title: "Босс" },
+  ],
 };
