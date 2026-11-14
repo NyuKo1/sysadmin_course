@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru" data-root="./">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Словарик терминов · Памятьвиль</title>
+  <meta name="description" content="Все слова курса простыми словами: CPU, RAM, SSD, UEFI, Secure Boot и другие. Пополняется с каждым уроком.">
+  <meta name="theme-color" content="#0d1210">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="index.html"><span data-px="bit"></span>Памятьвиль</a>
+      <nav>
+        <a href="index.html">Курс</a>
+        <a href="glossary.html" aria-current="page">Словарик</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="lesson-head">
+      <p class="kicker">Все уроки · пополняется с каждым уроком</p>
+      <h1>Словарик терминов</h1>
+      <p class="muted">Забыл, что такое CPU, NVMe или Secure Boot? Здесь каждое слово курса объяснено простыми словами. Ищи по названию или выбери урок. Слова последнего урока отмечены зелёной меткой «новое».</p>
+    </div>
+
+    <div class="bit-says">
+      <img class="gif" src="assets/gif/think.gif" alt="" width="96" height="96">
+      <div class="bubble">
+        <span class="who">Бит Байт</span>
+        Взрослые сисадмины тоже гуглят слова. Не стыдно не знать, стыдно не спросить. А в уроках подчёркнутые пунктиром слова можно нажать, и я сразу подскажу.
+      </div>
+    </div>
+
+    <div data-glossary></div>
+  </main>
+
+  <footer>
+    <div class="wrap">Курс «От железа до софта» · <a href="index.html">Все уроки</a></div>
+  </footer>
+
+  <script src="assets/js/pixel.js"></script>
+  <script src="assets/js/course.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="assets/js/glossary.js"></script>
+</body>
+</html>

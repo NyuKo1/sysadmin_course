@@ -17,6 +17,9 @@
 - `assets/js/games/engine.js` движок мини-игр, `types.js` типы игр: викторина, пары, сортировка, биты
 - `assets/js/content/lessonNN.js` задания для игр конкретного урока
 - `sw.js` офлайн-режим: сайт сохраняется на телефон и открывается без интернета
+- `glossary.html` и `assets/js/glossary.js` общий словарик терминов. Каждый урок дописывает свои слова (поле `l`). В тексте урока `<dfn data-g="cpu">CPU</dfn>` превращается в подсказку по нажатию
+- `assets/js/games/arena-bios.js` игры урока 6: порядок загрузки, охранник Secure Boot/TPM, симулятор UEFI, обновление BIOS
+- `teacher/home.html` конспекты уроков для дома (для учеников и родителей), печать по одному
 - `tools/password.html` считает отпечаток пароля к уроку
 - `tools/google-forms.gs` скрипт Google Apps Script, который создаёт формы ДЗ и тестов
 
@@ -26,6 +29,7 @@
 2. Создать `assets/js/content/lessonNN.js` с играми (образец в `lesson03.js`) и подключить его внизу страницы.
 3. В `assets/js/course.js` у урока указать `file: "lessons/NN.html"` и `pass` (отпечаток из `tools/password.html`).
 4. В `sw.js` добавить новые файлы в `FILES` и поднять `VERSION`, иначе телефоны не скачают обновление.
+5. Слова урока дописать в `assets/js/glossary.js` с номером урока, конспект для дома в `teacher/home.html`.
 
 ## Как проходят урок
 
