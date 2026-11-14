@@ -1380,6 +1380,8 @@ ul.check li::before { content: "✓"; position: absolute; left: 4px; color: var(
 .ks-tabs a { padding: 6px 12px; font-size: 14px; color: var(--muted); text-decoration: none; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; }
 .ks-tabs a:hover { color: var(--text); border-color: var(--copper); }
 .konspekt { margin: 24px 0; padding: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); scroll-margin-top: 110px; }
+.konspekt { overflow-wrap: break-word; }
+@media (max-width: 600px) { .konspekt { scroll-margin-top: 170px; } }
 .konspekt h2 { margin-top: 6px; }
 .konspekt h3 { margin-top: 1.2em; }
 .ks-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -1387,6 +1389,16 @@ ul.check li::before { content: "✓"; position: absolute; left: 4px; color: var(
 .ks-q { margin: 6px 0; padding: 8px 12px; background: var(--bg-2); border-radius: var(--radius); }
 .ks-q summary { cursor: pointer; font-weight: 600; }
 .ks-q p { margin: 6px 0 0; color: var(--led); }
+.ks-topic { margin: 14px 0; padding: 4px 0 4px 14px; border-left: 3px solid var(--line); }
+.ks-topic h4 { margin: 0 0 6px; color: var(--copper); font-size: 17px; }
+.ks-topic p, .ks-topic ul, .ks-topic ol { margin: 6px 0; }
+.ks-topic .table-wrap { margin: 8px 0; }
+.ks-more { margin-top: 10px; padding: 12px 14px; background: var(--bg-2); border: 1px dashed var(--copper); border-radius: var(--radius); }
+.ks-more h4 { margin: 10px 0 4px; font-size: 15px; color: var(--copper); }
+.ks-more h4:first-child { margin-top: 0; }
+.ks-more ul { margin: 4px 0; }
+.ks-more li { margin: 4px 0; }
+.ks-age { font-size: 12px; font-family: var(--mono); color: var(--muted); white-space: nowrap; }
 @media print {
   html[data-ks-print] body { background: #fff; color: #000; font-size: 13pt; }
   html[data-ks-print] .top, html[data-ks-print] footer, html[data-ks-print] .lesson-head, html[data-ks-print] .ks-tabs,
@@ -1398,4 +1410,7 @@ ul.check li::before { content: "✓"; position: absolute; left: 4px; color: var(
   html[data-ks-print] .ks-q { display: block; border: 1px solid #999; }
   html[data-ks-print] .ks-q p { display: block; }
   html[data-ks-print] .danger-box { border: 2px solid #000; }
+  html[data-ks-print] .ks-topic { border-left: 2px solid #999; break-inside: avoid; }
+  html[data-ks-print] .ks-more { border: 1px dashed #000; }
+  html[data-ks-print] .ks-more a::after { content: " (" attr(href) ")"; font-size: 10pt; word-break: break-all; }
 }
